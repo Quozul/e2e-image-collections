@@ -1,9 +1,4 @@
-import {
-  Application,
-  Router,
-  send,
-} from "https://deno.land/x/oak@v11.1.0/mod.ts";
-import { oakCors } from "https://deno.land/x/cors@v1.2.2/mod.ts";
+import { Application, oakCors, Router, send } from "./deps.ts";
 
 const router = new Router();
 
@@ -30,8 +25,10 @@ export async function hashString(str: string) {
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
-  // TODO: Append salt to `str`
-  const iv = await crypto.subtle.digest("SHA-256", encoder.encode(str));
+  const iv = await crypto.subtle.digest(
+    "SHA-256",
+    encoder.encode(str + (Deno.env.get("SALT") ?? "salt")),
+  );
   return decoder.decode(iv);
 }
 
@@ -42,7 +39,7 @@ router
   .get("/", (context) => {
     context.response.body = { ok: true };
   })
-  .post("/api/collection/:collection", async (context) => {
+  .post("/collection/:collection", async (context) => {
     const collection = context?.params?.collection;
 
     if (COLLECTION_RE.test(collection)) {
@@ -59,7 +56,7 @@ router
       context.response.status = 400;
     }
   })
-  .get("/api/collection/:collection/image/:image", async (context) => {
+  .get("/collection/:collection/image/:image", async (context) => {
     const collection = context?.params?.collection;
     const image = encodeURIComponent(context?.params?.image);
 
@@ -69,7 +66,7 @@ router
       context.response.status = 400;
     }
   })
-  .post("/api/collection/:collection/image/:image", async (context) => {
+  .post("/collection/:collection/image/:image", async (context) => {
     const collection = context?.params?.collection;
     const image = encodeURIComponent(context?.params?.image);
 
@@ -90,7 +87,7 @@ router
       context.response.status = 400;
     }
   })
-  .delete("/api/collection/:collection/image/:image", async (context) => {
+  .delete("/collection/:collection/image/:image", async (context) => {
     const collection = context?.params?.collection;
     const image = encodeURIComponent(context?.params?.image);
 
@@ -113,8 +110,5 @@ app.use(router.routes());
 app.use(router.allowedMethods());
 
 await app.listen({
-  port: 8000,
-  secure: true,
-  certFile: "cert.pem",
-  keyFile: "key.pem",
+  port: Deno.env.get("PORT") ?? 8000,
 });

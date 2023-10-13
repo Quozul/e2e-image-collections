@@ -12,7 +12,7 @@ export async function getOrCreateCollection(
   }
 
   const response = await fetch(
-    `${window.location.protocol}//${window.location.hostname}:8000/api/collection/${collection}`,
+    `${window.location.protocol}//${window.location.hostname}/api/collection/${collection}`,
     {
       mode: "cors",
       method: "post",
@@ -28,7 +28,7 @@ export async function uploadFile(
   buffer: ArrayBuffer,
 ) {
   await fetch(
-    `${window.location.protocol}//${window.location.hostname}:8000/api/collection/${collection}/image/${name}`,
+    `${window.location.protocol}//${window.location.hostname}/api/collection/${collection}/image/${name}`,
     {
       mode: "cors",
       method: "post",
@@ -39,7 +39,7 @@ export async function uploadFile(
 
 export async function deleteFile(collection: string, name: string) {
   await fetch(
-    `${window.location.protocol}//${window.location.hostname}:8000/api/collection/${collection}/image/${name}`,
+    `${window.location.protocol}//${window.location.hostname}/api/collection/${collection}/image/${name}`,
     {
       mode: "cors",
       method: "delete",

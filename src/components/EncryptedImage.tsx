@@ -3,6 +3,8 @@ import { deleteFile } from "./collection/collection.ts";
 import useOnScreen from "../hooks/useOnScreen.ts";
 import { useNavigate } from "react-router-dom";
 import { CryptoContext, ImageInformation } from "./CryptoContext.tsx";
+import { classNames } from "../helpers/classNames.ts";
+import Password from "./password/Password.tsx";
 
 type Props = {
   collectionName: string;
@@ -11,12 +13,11 @@ type Props = {
 
 function EncryptedImage({ collectionName, imageName }: Props) {
   const [isLoading, setIsLoading] = useState(false);
-  const [isEncrypted, setIsEncrypted] = useState(true);
   const [error, setError] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const isVisible = useOnScreen(ref);
   const navigate = useNavigate();
-  const { getImage, getCollection } = useContext(CryptoContext);
+  const { getImage, getCollection, key } = useContext(CryptoContext);
   const [image, setImage] = useState<ImageInformation | null>(null);
 
   const name = image?.name ?? imageName;
@@ -28,38 +29,52 @@ function EncryptedImage({ collectionName, imageName }: Props) {
       getImage(collectionName, imageName)
         .then((image) => {
           setImage(image);
-          setIsEncrypted(false);
           setError(false);
         })
         .catch((err) => {
           console.error(err);
           setError(true);
-        })
-        .finally(() => {
-          setIsLoading(false);
         });
     }
-  }, [isVisible, image, collectionName, imageName]);
+  }, [isVisible, image, collectionName, imageName, key]);
+
+  const imageClasses = classNames({
+    image: true,
+    loading: isLoading,
+  });
 
   return (
     <div className="image-container" ref={ref}>
-      {isEncrypted ? (
+      {image === null ? (
         <div className="image image-status">
           <h1>
             <i className="bi bi-file-earmark-lock"></i>
           </h1>
           File is encrypted
+          <Password placeholder="Enter password to decrypt" />
         </div>
-      ) : image === null ? (
-        <div className="image image-status">Image is loading</div>
       ) : (
+        isLoading && (
+          <div className="image image-status">
+            <h1>
+              <i className="bi bi-hourglass"></i>
+            </h1>
+            Image is loading
+          </div>
+        )
+      )}
+
+      {image !== null && (
         <img
           alt={name}
           onClick={() => {
             navigate(`/collection/${collectionName}/image/${imageName}`);
           }}
-          className="image"
+          className={imageClasses}
           src={image.url}
+          onLoad={() => {
+            setIsLoading(false);
+          }}
         />
       )}
 

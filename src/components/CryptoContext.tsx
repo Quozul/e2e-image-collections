@@ -35,6 +35,11 @@ export const CryptoContext = createContext<ContextType>({
 export type ImageInformation = {
   url: string;
   name: string;
+  type: string;
+  size: number;
+  index: number;
+  previous: string | null;
+  next: string | null;
 };
 
 export default function CryptoContextProvider({
@@ -51,6 +56,7 @@ export default function CryptoContextProvider({
       const collectionItem = await getOrCreateCollection(collectionName);
 
       setCollection(collectionItem);
+      setImageCache({});
 
       return collectionItem;
     }
@@ -60,25 +66,32 @@ export default function CryptoContextProvider({
 
   async function getImage(collectionName: string, imageName: string) {
     const collection = await getCollection(collectionName);
-
     const cacheKey = `${collectionName}/${imageName}`;
-
     const cachedImage = imageCache?.[cacheKey];
 
     if (typeof cachedImage !== "undefined") {
       return cachedImage;
     }
 
-    const url = await fetchAndDecryptImage(
+    const index = collection.files.indexOf(imageName);
+    const blob = await fetchAndDecryptImage(
       key,
       collection.iv,
       collection.name,
       imageName,
     );
 
+    const url = URL.createObjectURL(blob);
     const name = await decryptFileName(key, collection.iv, imageName);
-
-    const imageInformation: ImageInformation = { url, name };
+    const imageInformation: ImageInformation = {
+      url,
+      name,
+      size: blob.size,
+      type: blob.type,
+      previous: index >= 0 ? collection.files[index - 1] ?? null : null,
+      next: index >= 0 ? collection.files[index + 1] ?? null : null,
+      index,
+    };
 
     setImageCache((prevState) => ({
       ...prevState,

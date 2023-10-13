@@ -102,7 +102,7 @@ export async function fetchAndDecryptImage(
   imageName: string,
 ) {
   const response = await fetch(
-    `${window.location.protocol}//${window.location.hostname}:8000/api/collection/${collectionName}/image/${imageName}`,
+    `${window.location.protocol}//${window.location.hostname}/api/collection/${collectionName}/image/${imageName}`,
   );
   const buffer = await response.arrayBuffer();
 
@@ -112,7 +112,5 @@ export async function fetchAndDecryptImage(
     extractBytesFromString(iv),
   );
 
-  const blob = new Blob([decrypted]);
-
-  return URL.createObjectURL(blob);
+  return new Blob([decrypted]);
 }

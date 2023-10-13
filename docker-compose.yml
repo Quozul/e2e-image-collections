@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: ./api/Dockerfile
+    volumes:
+      - "./collections:/app/collections"
+
+  front:
+    build: .
+    ports:
+      - "80:80"

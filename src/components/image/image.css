@@ -1,20 +1,43 @@
 .image-page {
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-    gap: 20px;
-    overflow: hidden;
+  flex-grow: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .image-page .image {
-    object-fit: contain;
-    width: 100%;
-    height: auto;
-    flex-grow: 1;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+  flex-grow: 1;
 }
 
 .image-page .title {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.image-page .image-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+
+  @media (min-width: 1200px) {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+.image-row .file-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 20px;
+}
+
+.image-row .file-row.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
 }
