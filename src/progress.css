@@ -1,0 +1,59 @@
+.progress-container {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.progress-label {
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+}
+
+.upload-button {
+    pointer-events: none;
+}
+
+.upload-input {
+display: none;
+    width: 100%;
+}
+
+.progress-bar {
+    width: 100%;
+    appearance: none;
+}
+
+.progress-bar::-webkit-progress-bar {
+    background-color: #242424;
+    border-radius: 2px;
+}
+
+.progress-bar::-webkit-progress-value {
+    background-color: #646cff;
+    border-radius: 2px;
+}
+
+.file-row {
+    border: 1px solid transparent;
+    padding: 0.6em 1.2em;
+    font-size: 1em;
+    font-weight: 500;
+    font-family: inherit;
+    background-color: #1a1a1a;
+    transition: border-color 0.25s;
+}
+
+.file-row:last-of-type {
+    border-radius:  0 0 8px 8px ;
+}
+
+.file-row + .file-row {
+    border-top: 1px solid #242424;
+}
+
+.file-row:first-of-type {
+    border-radius: 8px 8px 0 0;
+}

@@ -1,109 +1,77 @@
-import { useState, useEffect, HTMLProps, useRef } from "react";
-import { decrypt, extractBytesFromString } from "./encryption.ts";
-import { createPortal } from "react-dom";
+import { useContext, useEffect, useRef, useState } from "react";
 import { deleteFile } from "./collection.ts";
 import useOnScreen from "./useOnScreen.ts";
-import Modal from "./Modal.tsx";
+import { useNavigate } from "react-router-dom";
+import { CryptoContext, ImageInformation } from "./CryptoContext.tsx";
 
 type Props = {
-  collection: string;
-  name: string;
-  isModalVisible: boolean;
-  iv: boolean;
-  setIsModalVisible: (isVisible: boolean) => void;
-  refresh: () => void;
-  cryptoKey: CryptoKey;
-} & HTMLProps<HTMLImageElement>;
+  collectionName: string;
+  imageName: string;
+};
 
-function EncryptedImage({
-  collection,
-  name,
-  refresh,
-  cryptoKey,
-  iv,
-  openedModal,
-  isModalVisible,
-  setIsModalVisible,
-  ...rest
-}: Props) {
-  const [url, setUrl] = useState<string | null>(null);
+function EncryptedImage({ collectionName, imageName }: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const [isEncrypted, setIsEncrypted] = useState(true);
   const [error, setError] = useState(false);
-  const ref = useRef<HTMLImageElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
   const isVisible = useOnScreen(ref);
+  const navigate = useNavigate();
+  const { getImage, getCollection } = useContext(CryptoContext);
+  const [image, setImage] = useState<ImageInformation | null>(null);
+
+  const name = image?.name ?? imageName;
 
   useEffect(() => {
-    setError(false);
-  }, [collection, name, cryptoKey]);
-
-  useEffect(() => {
-    if (isVisible && !isLoading && !url && !error) {
+    if (isVisible && image === null) {
       setIsLoading(true);
-      fetch(
-        `${window.location.protocol}//${window.location.hostname}:8000/api/collection/${collection}/image/${name}`,
-      )
-        .then((res) => res.arrayBuffer())
-        .then(async (buffer) => {
-          try {
-            const decrypted = await decrypt(
-              cryptoKey,
-              buffer,
-              extractBytesFromString(iv),
-            );
-            setUrl(URL.createObjectURL(decrypted));
-            setError(false);
-            setIsEncrypted(false);
-          } catch (e) {
-            console.error(e);
-            setIsEncrypted(true);
-            setError(true);
-          }
+
+      getImage(collectionName, imageName)
+        .then((image) => {
+          setImage(image);
+          setIsEncrypted(false);
+          setError(false);
         })
-        .catch(() => {
+        .catch((err) => {
+          console.error(err);
           setError(true);
         })
         .finally(() => {
           setIsLoading(false);
         });
     }
-  }, [isVisible, collection, name, isLoading, url, cryptoKey, error]);
+  }, [isVisible, image, collectionName, imageName]);
 
   return (
-    <div className="image-container">
-      {!url && isEncrypted ? (
-        <div className="image" ref={ref}>
+    <div className="image-container" ref={ref}>
+      {isEncrypted ? (
+        <div className="image image-status">
+          <h1>
+            <i className="bi bi-file-earmark-lock"></i>
+          </h1>
           File is encrypted
         </div>
+      ) : image === null ? (
+        <div className="image image-status">Image is loading</div>
       ) : (
         <img
+          alt={name}
           onClick={() => {
-            setIsModalVisible(true);
+            navigate(`/collection/${collectionName}/image/${imageName}`);
           }}
           className="image"
-          src={url ?? ""}
-          ref={ref}
-          {...rest}
+          src={image.url}
         />
       )}
 
-      {isModalVisible &&
-        createPortal(
-          <Modal
-            name={name}
-            src={url}
-            onClose={() => setIsModalVisible(false)}
-          />,
-          document.body,
-        )}
-
       <div className="row space-between">
-        <span className="image-name">{name}</span>
+        <span className="image-name" title={name}>
+          {name}
+        </span>
 
         <button
           onClick={async () => {
-            await deleteFile(collection, name);
-            await refresh();
+            await deleteFile(collectionName, imageName);
+            await getCollection(collectionName, true);
           }}
         >
           Delete

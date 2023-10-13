@@ -22,7 +22,6 @@ async function getOrCreateCollection(collection: string) {
     return await getCollectionContent(collection);
   } catch (e) {
     await Deno.mkdir(`collections/${collection}`);
-
     return await getCollectionContent(collection);
   }
 }
@@ -31,9 +30,13 @@ export async function hashString(str: string) {
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
+  // TODO: Append salt to `str`
   const iv = await crypto.subtle.digest("SHA-256", encoder.encode(str));
   return decoder.decode(iv);
 }
+
+const COLLECTION_RE = /^[a-z0-9-_.~]{1,32}$/;
+const IMAGE_RE = /^[A-Za-z0-9-_.~]+$/;
 
 router
   .get("/", (context) => {
@@ -41,12 +44,13 @@ router
   })
   .post("/api/collection/:collection", async (context) => {
     const collection = context?.params?.collection;
-    if (collection) {
+
+    if (COLLECTION_RE.test(collection)) {
       try {
         const files = await getOrCreateCollection(collection);
         const iv = await hashString(collection);
 
-        context.response.body = { files, iv };
+        context.response.body = { files, iv, name: collection };
       } catch (e) {
         console.error(e);
         context.response.status = 500;
@@ -57,24 +61,26 @@ router
   })
   .get("/api/collection/:collection/image/:image", async (context) => {
     const collection = context?.params?.collection;
-    const image = context?.params?.image;
+    const image = encodeURIComponent(context?.params?.image);
 
-    await send(context, `${collection}/${image}`, { root: "collections" });
+    if (COLLECTION_RE.test(collection) && IMAGE_RE.test(image)) {
+      await send(context, `${collection}/${image}`, { root: "collections" });
+    } else {
+      context.response.status = 400;
+    }
   })
   .post("/api/collection/:collection/image/:image", async (context) => {
     const collection = context?.params?.collection;
-    const image = context?.params?.image;
+    const image = encodeURIComponent(context?.params?.image);
 
-    if (collection && image) {
+    if (COLLECTION_RE.test(collection) && IMAGE_RE.test(image)) {
       try {
         const body = await context.request.body({
           type: "bytes",
         }).value;
 
-        context.response.body = await Deno.writeFile(
-          `collections/${collection}/${image}`,
-          body,
-        );
+        await Deno.writeFile(`collections/${collection}/${image}`, body);
+        context.response.status = 201;
       } catch (e) {
         console.error(e);
         context.response.status = 500;
@@ -86,11 +92,12 @@ router
   })
   .delete("/api/collection/:collection/image/:image", async (context) => {
     const collection = context?.params?.collection;
-    const image = context?.params?.image;
+    const image = encodeURIComponent(context?.params?.image);
 
-    if (collection && image) {
+    if (COLLECTION_RE.test(collection) && IMAGE_RE.test(image)) {
       try {
         await Deno.remove(`collections/${collection}/${image}`);
+        context.response.status = 204;
       } catch (e) {
         console.error(e);
         context.response.status = 500;

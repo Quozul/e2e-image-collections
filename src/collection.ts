@@ -1,9 +1,10 @@
 export type CollectionItem = {
   iv: string;
+  name: string;
   files: string[];
 };
 
-export async function createCollection(
+export async function getOrCreateCollection(
   collection: string,
 ): Promise<CollectionItem> {
   if (collection.length === 0) {

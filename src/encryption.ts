@@ -9,7 +9,7 @@ export function download(blob: Blob, filename: string) {
   window.URL.revokeObjectURL(url);
 }
 
-export async function getKey(password: string) {
+export async function getKey(password: string): Promise<CryptoKey> {
   const encoder = new TextEncoder();
   const encodedPassword = encoder.encode(password);
 
@@ -27,29 +27,92 @@ export async function getKey(password: string) {
   );
 }
 
-export function extractBytesFromString(str: string) {
+export function extractBytesFromString(str: string): Uint8Array {
   const encoder = new TextEncoder();
   return encoder.encode(str);
+}
+
+export function decodeBase64UrlToArrayBuffer(str: string): ArrayBuffer {
+  str = str.replace(/-/g, "+").replace(/_/g, "/");
+  while (str.length % 4) {
+    str += "=";
+  }
+
+  const binaryString = atob(str);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+
+  return bytes.buffer;
+}
+
+export async function bytesToBase64Url(bytes: ArrayBuffer): Promise<string> {
+  return await new Promise((resolve, reject) => {
+    const reader = Object.assign(new FileReader(), {
+      onload: () =>
+        resolve(
+          reader.result
+            .substr(reader.result.indexOf(",") + 1)
+            .replace(/\+/g, "-")
+            .replace(/\//g, "_")
+            .replace(/=+$/, ""),
+        ),
+      onerror: () => reject(reader.error),
+    });
+    reader.readAsDataURL(new Blob([bytes]));
+  });
 }
 
 export async function decrypt(
   key: CryptoKey,
   data: BufferSource,
   iv: Uint8Array,
-) {
-  const result = await crypto.subtle.decrypt(
-    { name: "AES-GCM", iv },
-    key,
-    data,
-  );
-
-  return new Blob([result]);
+): Promise<ArrayBuffer> {
+  return await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
 }
 
 export async function encrypt(
   key: CryptoKey,
   data: BufferSource,
   iv: Uint8Array,
-) {
+): Promise<ArrayBuffer> {
   return await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, data);
+}
+
+export async function decryptFileName(
+  cryptoKey: CryptoKey,
+  iv: string,
+  name: string,
+): Promise<string> {
+  const decryptedBase64Name = await decrypt(
+    cryptoKey,
+    decodeBase64UrlToArrayBuffer(name),
+    extractBytesFromString(iv),
+  );
+
+  const decoder = new TextDecoder();
+  return decoder.decode(decryptedBase64Name);
+}
+
+export async function fetchAndDecryptImage(
+  cryptoKey: CryptoKey,
+  iv: string,
+  collectionName: string,
+  imageName: string,
+) {
+  const response = await fetch(
+    `${window.location.protocol}//${window.location.hostname}:8000/api/collection/${collectionName}/image/${imageName}`,
+  );
+  const buffer = await response.arrayBuffer();
+
+  const decrypted = await decrypt(
+    cryptoKey,
+    buffer,
+    extractBytesFromString(iv),
+  );
+
+  const blob = new Blob([decrypted]);
+
+  return URL.createObjectURL(blob);
 }
