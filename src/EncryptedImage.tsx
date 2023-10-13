@@ -1,7 +1,6 @@
 import { useState, useEffect, HTMLProps, useRef } from "react";
-import { decrypt } from "./encryption.ts";
+import { decrypt, extractBytesFromString } from "./encryption.ts";
 import { createPortal } from "react-dom";
-import { IV } from "./App.tsx";
 import { deleteFile } from "./collection.ts";
 import useOnScreen from "./useOnScreen.ts";
 import Modal from "./Modal.tsx";
@@ -10,6 +9,7 @@ type Props = {
   collection: string;
   name: string;
   isModalVisible: boolean;
+  iv: boolean;
   setIsModalVisible: (isVisible: boolean) => void;
   refresh: () => void;
   cryptoKey: CryptoKey;
@@ -20,6 +20,7 @@ function EncryptedImage({
   name,
   refresh,
   cryptoKey,
+  iv,
   openedModal,
   isModalVisible,
   setIsModalVisible,
@@ -27,6 +28,7 @@ function EncryptedImage({
 }: Props) {
   const [url, setUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isEncrypted, setIsEncrypted] = useState(true);
   const [error, setError] = useState(false);
   const ref = useRef<HTMLImageElement>(null);
   const isVisible = useOnScreen(ref);
@@ -43,9 +45,20 @@ function EncryptedImage({
       )
         .then((res) => res.arrayBuffer())
         .then(async (buffer) => {
-          const decrypted = await decrypt(cryptoKey, buffer, IV);
-          setUrl(URL.createObjectURL(decrypted));
-          setError(false);
+          try {
+            const decrypted = await decrypt(
+              cryptoKey,
+              buffer,
+              extractBytesFromString(iv),
+            );
+            setUrl(URL.createObjectURL(decrypted));
+            setError(false);
+            setIsEncrypted(false);
+          } catch (e) {
+            console.error(e);
+            setIsEncrypted(true);
+            setError(true);
+          }
         })
         .catch(() => {
           setError(true);
@@ -58,14 +71,21 @@ function EncryptedImage({
 
   return (
     <div className="image-container">
-      <img
-        onClick={() => {
-          setIsModalVisible(true);
-        }}
-        src={url ?? ""}
-        ref={ref}
-        {...rest}
-      />
+      {!url && isEncrypted ? (
+        <div className="image" ref={ref}>
+          File is encrypted
+        </div>
+      ) : (
+        <img
+          onClick={() => {
+            setIsModalVisible(true);
+          }}
+          className="image"
+          src={url ?? ""}
+          ref={ref}
+          {...rest}
+        />
+      )}
 
       {isModalVisible &&
         createPortal(

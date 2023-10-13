@@ -21,10 +21,15 @@ export async function getKey(password: string) {
   return await crypto.subtle.importKey(
     "raw",
     keyData,
-    { name: "AES-CBC" },
+    { name: "AES-GCM" },
     false,
     ["encrypt", "decrypt"],
   );
+}
+
+export function extractBytesFromString(str: string) {
+  const encoder = new TextEncoder();
+  return encoder.encode(str);
 }
 
 export async function decrypt(
@@ -33,7 +38,7 @@ export async function decrypt(
   iv: Uint8Array,
 ) {
   const result = await crypto.subtle.decrypt(
-    { name: "AES-CBC", iv: iv },
+    { name: "AES-GCM", iv },
     key,
     data,
   );
@@ -46,11 +51,5 @@ export async function encrypt(
   data: BufferSource,
   iv: Uint8Array,
 ) {
-  const result = await crypto.subtle.encrypt(
-    { name: "AES-CBC", iv: iv },
-    key,
-    data,
-  );
-
-  return new Blob([result], { type: "text/plain" });
+  return await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, data);
 }

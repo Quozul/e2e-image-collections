@@ -1,28 +1,20 @@
 import { useState, useEffect } from "react";
-import { encrypt, getKey } from "./encryption.ts";
-import {
-  createCollection,
-  getCollectionContent,
-  uploadFile,
-} from "./collection.ts";
+import { encrypt, extractBytesFromString, getKey } from "./encryption.ts";
+import { CollectionItem, createCollection, uploadFile } from "./collection.ts";
 import EncryptedImage from "./EncryptedImage.tsx";
 import "./app.css";
-
-// TODO: Generate random IV
-export const IV = new Uint8Array([
-  124, 124, 124, 124, 124, 124, 124, 124, 124, 124, 124, 124, 124, 124, 124,
-  124,
-]);
 
 function App() {
   const [password, setPassword] = useState<string>("");
   const [visibleModal, setVisibleModal] = useState<string | null>(null);
   const [key, setKey] = useState<CryptoKey | null>(null);
   const [collection, setCollection] = useState<string>("");
-  const [content, setContent] = useState([]);
+  const [content, setContent] = useState<CollectionItem | null>(null);
 
   function refresh() {
-    createCollection(collection).then(setContent);
+    return createCollection(collection)
+      .then(setContent)
+      .catch(() => setContent(null));
   }
 
   useEffect(() => {
@@ -33,10 +25,10 @@ function App() {
     <div className="column p-20">
       <form
         className="form row w-100"
-        onSubmit={(event) => {
+        onSubmit={async (event) => {
           event.preventDefault();
           getKey(password).then(setKey);
-          refresh();
+          await refresh();
           setPassword("");
         }}
       >
@@ -69,21 +61,29 @@ function App() {
               type="file"
               multiple
               onChange={async ({ currentTarget }) => {
-                for (const file of currentTarget.files) {
-                  const buffer = await file.arrayBuffer();
-                  const encrypted = await encrypt(key, buffer, IV);
-                  await uploadFile(collection, file.name, encrypted);
-                }
+                try {
+                  for (const file of currentTarget.files) {
+                    const buffer = await file.arrayBuffer();
+                    const encrypted = await encrypt(
+                      key,
+                      buffer,
+                      extractBytesFromString(content.iv),
+                    );
+                    await uploadFile(collection, file.name, encrypted);
+                  }
 
-                setContent(await createCollection(collection));
+                  await refresh();
+                } catch (e) {
+                  console.error(e);
+                }
               }}
             />
           </div>
 
           <div className="container">
-            {content.length === 0
+            {content === null
               ? "The collection is empty"
-              : content.map((name) => (
+              : content.files.map((name) => (
                   <EncryptedImage
                     isModalVisible={name === visibleModal}
                     setIsModalVisible={(isVisible) => {
@@ -94,6 +94,7 @@ function App() {
                       }
                     }}
                     collection={collection}
+                    iv={content.iv}
                     name={name}
                     refresh={refresh}
                     key={name}

@@ -27,6 +27,14 @@ async function getOrCreateCollection(collection: string) {
   }
 }
 
+export async function hashString(str: string) {
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+
+  const iv = await crypto.subtle.digest("SHA-256", encoder.encode(str));
+  return decoder.decode(iv);
+}
+
 router
   .get("/", (context) => {
     context.response.body = { ok: true };
@@ -35,7 +43,10 @@ router
     const collection = context?.params?.collection;
     if (collection) {
       try {
-        context.response.body = await getOrCreateCollection(collection);
+        const files = await getOrCreateCollection(collection);
+        const iv = await hashString(collection);
+
+        context.response.body = { files, iv };
       } catch (e) {
         console.error(e);
         context.response.status = 500;
