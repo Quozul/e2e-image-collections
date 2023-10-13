@@ -67,6 +67,10 @@ textarea:focus {
   outline: 1px solid #646cff;
 }
 
+input.invalid {
+  outline: 1px solid indianred;
+}
+
 textarea {
   padding: 8px;
   resize: none;

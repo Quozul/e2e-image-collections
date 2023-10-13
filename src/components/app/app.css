@@ -97,9 +97,20 @@
 }
 
 .form {
+  display: flex;
   flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+}
 
-  @media (min-width: 768px) {
-    flex-direction: row;
-  }
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.label .invalid {
+  color: indianred;
 }
