@@ -1,4 +1,6 @@
-FROM denoland/deno
+FROM alpine:edge
+
+RUN apk --update add deno
 
 WORKDIR /app
 
