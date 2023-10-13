@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useContext, useEffect, useState } from "react";
-import { CryptoContext, ImageInformation } from "./CryptoContext.tsx";
+import { CryptoContext, ImageInformation } from "../CryptoContext.tsx";
 import "./image.css";
 
 export default function Image() {

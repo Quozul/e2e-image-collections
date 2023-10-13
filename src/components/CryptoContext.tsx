@@ -5,8 +5,14 @@ import {
   SetStateAction,
   useState,
 } from "react";
-import { CollectionItem, getOrCreateCollection } from "./collection.ts";
-import { decryptFileName, fetchAndDecryptImage } from "./encryption.ts";
+import {
+  CollectionItem,
+  getOrCreateCollection,
+} from "./collection/collection.ts";
+import {
+  decryptFileName,
+  fetchAndDecryptImage,
+} from "../helpers/encryption.ts";
 
 type ContextType = {
   key: CryptoKey | null;

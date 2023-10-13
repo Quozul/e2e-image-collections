@@ -1,6 +1,6 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import { deleteFile } from "./collection.ts";
-import useOnScreen from "./useOnScreen.ts";
+import { deleteFile } from "./collection/collection.ts";
+import useOnScreen from "../hooks/useOnScreen.ts";
 import { useNavigate } from "react-router-dom";
 import { CryptoContext, ImageInformation } from "./CryptoContext.tsx";
 

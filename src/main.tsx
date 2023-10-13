@@ -1,12 +1,12 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App";
+import App from "./components/app/App.tsx";
 import "./index.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import Collection from "./Collection.tsx";
-import CryptoContextProvider from "./CryptoContext.tsx";
-import Image from "./Image.tsx";
+import Collection from "./components/collection/Collection.tsx";
+import CryptoContextProvider from "./components/CryptoContext.tsx";
+import Image from "./components/image/Image.tsx";
 
 const router = createBrowserRouter([
   {

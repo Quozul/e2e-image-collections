@@ -1,30 +1,28 @@
-# Vite + Deno + React + TypeScript
+# e2e image collections
 
-## Running
+I wanted to share images across all my devices with maximum security through encryption.
+This was the opportunity to learn how to use the WebCrypto API.
 
-You need to have Deno v1.28.0 or later installed to run this repo.
+## Requirements
 
-Start a dev server:
+- Deno
+- Node
+- Npm
 
-```
-$ deno task dev
-```
+## Getting started
 
-## Deploy
+1. As the WebCrypto requires https, you have to generate a SSL certificate for the API.  
+   You can use the following command to generate one with OpenSSL.
+   ```shell
+   openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 365 -nodes
+   ```
 
-Build production assets:
+2. Start the front end with
+    ```shell
+    npm run dev
+    ```
 
-```
-$ deno task build
-```
-
-## Notes
-
-- You need to use `.mjs` or `.mts` extension for the `vite.config.[ext]` file.
-
-## Papercuts
-
-Currently there's a "papercut" for Deno users:
-
-- peer dependencies need to be referenced in `vite.config.js` - in this example
-  it is `react` and `react-dom` packages that need to be referenced
+3. Start the back end with
+   ```shell
+   deno task api
+   ```

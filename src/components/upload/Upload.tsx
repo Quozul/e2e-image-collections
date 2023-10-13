@@ -2,9 +2,9 @@ import {
   bytesToBase64Url,
   encrypt,
   extractBytesFromString,
-} from "./encryption.ts";
-import { CollectionItem, uploadFile } from "./collection.ts";
-import { CryptoContext } from "./CryptoContext.tsx";
+} from "../../helpers/encryption.ts";
+import { CollectionItem, uploadFile } from "../collection/collection.ts";
+import { CryptoContext } from "../CryptoContext.tsx";
 import { useContext, useEffect, useState } from "react";
 import "./progress.css";
 

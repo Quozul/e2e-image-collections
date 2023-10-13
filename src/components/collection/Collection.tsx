@@ -1,8 +1,8 @@
 import { useNavigate, useParams } from "react-router-dom";
-import EncryptedImage from "./EncryptedImage.tsx";
+import EncryptedImage from "../EncryptedImage.tsx";
 import { useContext, useEffect, useState } from "react";
-import { CryptoContext } from "./CryptoContext.tsx";
-import Upload from "./Upload.tsx";
+import { CryptoContext } from "../CryptoContext.tsx";
+import Upload from "../upload/Upload.tsx";
 
 export default function Collection() {
   const navigate = useNavigate();

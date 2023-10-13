@@ -1,8 +1,8 @@
 import { useContext, useState } from "react";
-import { getKey } from "./encryption.ts";
+import { getKey } from "../../helpers/encryption.ts";
 import "./app.css";
 import { useNavigate } from "react-router-dom";
-import { CryptoContext } from "./CryptoContext.tsx";
+import { CryptoContext } from "../CryptoContext.tsx";
 
 function App() {
   const navigate = useNavigate();
