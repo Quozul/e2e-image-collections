@@ -1,9 +1,9 @@
 import { useContext, useState } from "react";
-import { getKey } from "../../helpers/encryption.ts";
+import { getKey } from "../../helpers/encryption";
 import "./app.css";
 import { useNavigate } from "react-router-dom";
-import { CryptoContext } from "../CryptoContext.tsx";
-import { classNames } from "../../helpers/classNames.ts";
+import { CryptoContext } from "../CryptoContext";
+import { classNames } from "../../helpers/classNames";
 
 const COLLECTION_RE = /^[a-z0-9-_.~]{1,32}$/;
 
@@ -45,7 +45,6 @@ function App() {
             autoComplete="off"
             value={collection}
             required
-            pattern="^[a-z0-9-_.~]{1,32}$"
             onInput={({ currentTarget }) => {
               if (!COLLECTION_RE.test(currentTarget.value)) {
                 setInvalidCollectionName(true);

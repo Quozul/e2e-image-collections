@@ -100,6 +100,9 @@ export default function Image() {
                     currentTarget.style.height =
                       currentTarget.scrollHeight - 16 + "px";
                   }}
+                  onBlur={({ currentTarget }) => {
+                    console.log("change", currentTarget.value);
+                  }}
                   placeholder="Enter a description for this file."
                 />
               </div>

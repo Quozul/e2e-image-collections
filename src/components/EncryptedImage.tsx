@@ -28,6 +28,7 @@ function EncryptedImage({ collectionName, imageName }: Props) {
 
       getImage(collectionName, imageName)
         .then((image) => {
+          setIsLoading(image.mime?.startsWith("image/") ?? false);
           setImage(image);
           setError(false);
         })
@@ -48,7 +49,7 @@ function EncryptedImage({ collectionName, imageName }: Props) {
       {image === null ? (
         <div className="image image-status">
           <h1>
-            <i className="bi bi-file-earmark-lock"></i>
+            <i className="bi bi-shield-lock"></i>
           </h1>
           File is encrypted
           <Password placeholder="Enter password to decrypt" />
@@ -64,19 +65,27 @@ function EncryptedImage({ collectionName, imageName }: Props) {
         )
       )}
 
-      {image !== null && (
-        <img
-          alt={name}
-          onClick={() => {
-            navigate(`/collection/${collectionName}/image/${imageName}`);
-          }}
-          className={imageClasses}
-          src={image.url}
-          onLoad={() => {
-            setIsLoading(false);
-          }}
-        />
-      )}
+      {image !== null &&
+        (image?.mime?.startsWith("image/") ? (
+          <img
+            alt={name}
+            onClick={() => {
+              navigate(`/collection/${collectionName}/image/${imageName}`);
+            }}
+            className={imageClasses}
+            src={image.url}
+            onLoad={() => {
+              setIsLoading(false);
+            }}
+          />
+        ) : (
+          <div className="image image-status">
+            <h1>
+              <i className="bi bi-file-earmark"></i>
+            </h1>
+            Cannot display file preview
+          </div>
+        ))}
 
       <div className="row space-between">
         <span className="image-name" title={name}>

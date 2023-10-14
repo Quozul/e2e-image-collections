@@ -1,6 +1,11 @@
 {
   "compilerOptions": {
+    "target": "ES5",
+    "lib": ["dom", "dom.iterable", "ESNext"],
+    "module": "esnext",
     "strict": true,
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "jsx": "react-jsx",
+    "moduleResolution": "node"
   }
 }

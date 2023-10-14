@@ -1,10 +1,6 @@
-import {
-  bytesToBase64Url,
-  encrypt,
-  extractBytesFromString,
-} from "../../helpers/encryption.ts";
-import { CollectionItem, uploadFile } from "../collection/collection.ts";
-import { CryptoContext } from "../CryptoContext.tsx";
+import { encryptFile, extractBytesFromString } from "../../helpers/encryption";
+import { CollectionItem, uploadFile } from "../collection/collection";
+import { CryptoContext } from "../CryptoContext";
 import { useContext, useEffect, useState } from "react";
 import "./progress.css";
 
@@ -12,30 +8,59 @@ type Props = {
   collection: CollectionItem;
 };
 
+type Progress = {
+  name: string;
+  status: string;
+  progress: number;
+  total: number;
+};
+
 export default function Upload({ collection }: Props) {
   const { key, getCollection } = useContext(CryptoContext);
-  const [files, setFiles] = useState<File[] | null>(null);
-  const [progress, setProgress] = useState(0);
+  const [files, setFiles] = useState<File[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<Progress[]>([]);
   const [total, setTotal] = useState(0);
+
+  const progress = uploadedFiles
+    .map(({ progress }) => progress)
+    .reduce((previousValue, currentValue) => previousValue + currentValue, 0);
 
   async function uploadFiles() {
     try {
-      setTotal(files.length);
-      const iv = extractBytesFromString(collection.iv);
+      const total = files
+        .map((file) => file.size)
+        .reduce(
+          (previousValue, currentValue) => previousValue + currentValue,
+          0,
+        );
+      setTotal(total);
 
-      let index = 0;
+      const iv = extractBytesFromString(collection.iv);
+      const uploadedFiles: Progress[] = [];
 
       for (const file of files) {
-        const buffer = await file.arrayBuffer();
-        const encryptedName = encodeURIComponent(
-          await bytesToBase64Url(
-            await encrypt(key, extractBytesFromString(file.name).buffer, iv),
-          ),
-        );
-        const encryptedContent = await encrypt(key, buffer, iv);
+        const encryptedFile = await encryptFile(key, iv, file);
 
-        await uploadFile(collection.name, encryptedName, encryptedContent);
-        setProgress(++index);
+        const upload = await uploadFile(collection.name, encryptedFile);
+        let uploadingFile: Progress = {
+          name: file.name,
+          status: "progress",
+          progress: 0,
+          total: file.size,
+        };
+
+        for await (const event of upload) {
+          uploadingFile = {
+            name: file.name,
+            status: event.type,
+            progress: event.loaded,
+            total: event.total,
+          };
+          setUploadedFiles([...uploadedFiles, uploadingFile]);
+        }
+
+        uploadedFiles.push(uploadingFile);
+        setUploadedFiles(uploadedFiles);
       }
     } catch (e) {
       console.error(e);
@@ -43,9 +68,10 @@ export default function Upload({ collection }: Props) {
   }
 
   useEffect(() => {
-    if (files !== null) {
+    if (files.length > 0) {
+      setUploadedFiles([]);
       uploadFiles().then(() => {
-        setFiles(null);
+        setFiles([]);
         getCollection(collection.name, true);
       });
     }
@@ -58,26 +84,47 @@ export default function Upload({ collection }: Props) {
           className="upload-input"
           type="file"
           multiple
+          disabled={files.length > 0}
           onChange={({ currentTarget }) => {
-            setFiles(Array.from(currentTarget.files));
+            setFiles(Array.from(currentTarget.files ?? []));
           }}
         />
 
-        <button className="upload-button">Upload file</button>
-      </label>
-
-      {files !== null && (
-        <>
+        {files.length > 0 && (
           <progress className="progress-bar" max={total} value={progress}>
             {(progress / total) * 100}%
           </progress>
-          <div>
-            {files.map((file) => {
-              return <div className="file-row">{file.name}</div>;
-            })}
-          </div>
-        </>
-      )}
+        )}
+      </label>
+
+      <div className="upload-list">
+        {files.map((file) => {
+          const element = uploadedFiles.find(({ name }) => file.name === name);
+          const status = element?.status ?? null;
+          const progress = element?.progress ?? 0;
+          const total = element?.total ?? 0;
+
+          return (
+            <div className="file-row" key={file.name}>
+              <div className="inner">
+                {file.name}
+
+                {status === "load" ? (
+                  <i className="bi bi-check" />
+                ) : status === "error" ? (
+                  <i className="bi bi-x" />
+                ) : (
+                  <i className="bi bi-hourglass-split" />
+                )}
+              </div>
+
+              <progress className="progress-bar" max={total} value={progress}>
+                {(progress / total) * 100}%
+              </progress>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

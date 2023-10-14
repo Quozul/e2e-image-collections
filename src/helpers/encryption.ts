@@ -50,16 +50,20 @@ export function decodeBase64UrlToArrayBuffer(str: string): ArrayBuffer {
 export async function bytesToBase64Url(bytes: ArrayBuffer): Promise<string> {
   return await new Promise((resolve, reject) => {
     const reader = Object.assign(new FileReader(), {
-      onload: () =>
+      onload: () => {
+        const result = String(reader.result) ?? "";
+
         resolve(
-          reader.result
-            .substr(reader.result.indexOf(",") + 1)
+          result
+            .substring(result.indexOf(",") + 1)
             .replace(/\+/g, "-")
             .replace(/\//g, "_")
             .replace(/=+$/, ""),
-        ),
+        );
+      },
       onerror: () => reject(reader.error),
     });
+
     reader.readAsDataURL(new Blob([bytes]));
   });
 }
@@ -78,6 +82,20 @@ export async function encrypt(
   iv: Uint8Array,
 ): Promise<ArrayBuffer> {
   return await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, data);
+}
+
+export async function encryptFile(key: CryptoKey, iv: Uint8Array, file: File) {
+  const buffer = await file.arrayBuffer();
+  const encryptedName = encodeURIComponent(
+    await bytesToBase64Url(
+      await encrypt(key, extractBytesFromString(file.name).buffer, iv),
+    ),
+  );
+  const encryptedContent = await encrypt(key, buffer, iv);
+  return new File([encryptedContent], encryptedName, {
+    type: file.type,
+    lastModified: file.lastModified,
+  });
 }
 
 export async function decryptFileName(
@@ -102,7 +120,9 @@ export async function fetchAndDecryptImage(
   imageName: string,
 ) {
   const response = await fetch(
-    `${window.location.protocol}//${window.location.hostname}/api/collection/${collectionName}/image/${imageName}`,
+    `${
+      import.meta.env.VITE_API_URL
+    }/collection/${collectionName}/image/${imageName}`,
   );
   const buffer = await response.arrayBuffer();
 
@@ -112,5 +132,7 @@ export async function fetchAndDecryptImage(
     extractBytesFromString(iv),
   );
 
-  return new Blob([decrypted]);
+  const name = await decryptFileName(cryptoKey, iv, imageName);
+
+  return new File([decrypted], name);
 }

@@ -9,25 +9,34 @@
 .progress-label {
   display: flex;
   flex-direction: column;
-  cursor: pointer;
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-.upload-button {
-  pointer-events: none;
+.progress-label:hover {
+  border-color: #646cff;
+  color: unset;
 }
 
 .upload-input {
-  display: none;
   width: 100%;
+}
+
+.upload-input:not(:disabled) {
+  cursor: pointer;
 }
 
 .progress-bar {
   width: 100%;
   appearance: none;
+  position: absolute;
+  bottom: 0;
+  height: 2px;
 }
 
 .progress-bar::-webkit-progress-bar {
-  background-color: #242424;
+  background-color: transparent;
   border-radius: 2px;
 }
 
@@ -56,4 +65,20 @@
 
 .file-row:first-of-type {
   border-radius: 8px 8px 0 0;
+}
+
+.file-row:first-of-type:last-of-type {
+  border-radius: 8px ;
+}
+
+.upload-list .file-row {
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+}
+
+.upload-list .file-row .inner {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.6em 1.2em;
 }

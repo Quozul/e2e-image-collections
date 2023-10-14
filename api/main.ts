@@ -7,7 +7,9 @@ async function getCollectionContent(collection: string) {
   for await (const dirEntry of await Deno.readDir(
     `collections/${collection}`,
   )) {
-    entries.push(dirEntry.name);
+    if (!dirEntry.name.startsWith(".")) {
+      entries.push(dirEntry.name);
+    }
   }
   return entries;
 }
@@ -33,7 +35,7 @@ export async function hashString(str: string) {
 }
 
 const COLLECTION_RE = /^[a-z0-9-_.~]{1,32}$/;
-const IMAGE_RE = /^[A-Za-z0-9-_.~]+$/;
+const IMAGE_RE = /^[A-Za-z0-9-_.]+$/;
 
 router
   .get("/", (context) => {

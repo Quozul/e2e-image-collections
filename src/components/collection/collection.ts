@@ -1,3 +1,5 @@
+import fetchProgress from "../../helpers/fetchProgress";
+
 export type CollectionItem = {
   iv: string;
   name: string;
@@ -12,7 +14,7 @@ export async function getOrCreateCollection(
   }
 
   const response = await fetch(
-    `${window.location.protocol}//${window.location.hostname}/api/collection/${collection}`,
+    `${import.meta.env.VITE_API_URL}/collection/${collection}`,
     {
       mode: "cors",
       method: "post",
@@ -22,24 +24,19 @@ export async function getOrCreateCollection(
   return await response.json();
 }
 
-export async function uploadFile(
-  collection: string,
-  name: string,
-  buffer: ArrayBuffer,
-) {
-  await fetch(
-    `${window.location.protocol}//${window.location.hostname}/api/collection/${collection}/image/${name}`,
-    {
-      mode: "cors",
-      method: "post",
-      body: buffer,
-    },
+export async function uploadFile(collection: string, file: File) {
+  return fetchProgress(
+    `${import.meta.env.VITE_API_URL}/collection/${collection}/image/${
+      file.name
+    }`,
+    "post",
+    await file.arrayBuffer(),
   );
 }
 
 export async function deleteFile(collection: string, name: string) {
   await fetch(
-    `${window.location.protocol}//${window.location.hostname}/api/collection/${collection}/image/${name}`,
+    `${import.meta.env.VITE_API_URL}/collection/${collection}/image/${name}`,
     {
       mode: "cors",
       method: "delete",
