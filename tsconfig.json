@@ -6,6 +6,9 @@
     "strict": true,
     "strictNullChecks": true,
     "jsx": "react-jsx",
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "paths": {
+      "~/*": ["./src/*"]
+    }
   }
 }

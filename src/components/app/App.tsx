@@ -1,9 +1,10 @@
 import { useContext, useState } from "react";
-import { getKey } from "../../helpers/encryption";
-import "./app.css";
 import { useNavigate } from "react-router-dom";
-import { CryptoContext } from "../CryptoContext";
-import { classNames } from "../../helpers/classNames";
+
+import { getKey } from "~/helpers/encryption";
+import { CryptoContext } from "~/components/CryptoContext";
+import { classNames } from "~/helpers/classNames";
+import "./app.css";
 
 const COLLECTION_RE = /^[a-z0-9-_.~]{1,32}$/;
 

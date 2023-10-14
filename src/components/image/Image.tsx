@@ -1,23 +1,35 @@
-import { useNavigate, useParams } from "react-router-dom";
 import { useContext, useEffect, useState } from "react";
-import { CryptoContext, ImageInformation } from "../CryptoContext.tsx";
+import { useNavigate, useParams } from "react-router-dom";
+
+import { CryptoContext, ImageInformation } from "~/components/CryptoContext";
+import Password from "~/components/password/Password";
+import { uploadFile } from "~/components/collection/collection";
+import { encrypt, extractBytesFromString } from "~/helpers/encryption";
 import "./image.css";
-import Password from "../password/Password.tsx";
 
 export default function Image() {
   const navigate = useNavigate();
-  const { collection, image: imageName } = useParams();
+  const { collection: collectionName, image: imageName } = useParams();
   const [isLoading, setIsLoading] = useState(false);
-  const { key, getImage } = useContext(CryptoContext);
+  const { key, collection, getImage } = useContext(CryptoContext);
   const [image, setImage] = useState<ImageInformation | null>(null);
+  const [newDescription, setNewDescription] = useState<string>("");
 
-  useEffect(() => {
-    getImage(collection, imageName)
+  async function refresh(refresh = false) {
+    getImage(String(collectionName), imageName, refresh)
       .then(setImage)
       .catch(() => {
         setImage(null);
       });
-  }, [collection, imageName, key]);
+  }
+
+  useEffect(() => {
+    refresh();
+  }, [collectionName, imageName, key]);
+
+  useEffect(() => {
+    setNewDescription(image?.description ?? "");
+  }, [image]);
 
   return (
     <div className="image-page">
@@ -26,7 +38,7 @@ export default function Image() {
 
         <button
           onClick={() => {
-            navigate(`/collection/${collection}`);
+            navigate(`/collection/${collectionName}`);
           }}
         >
           Back to collection
@@ -37,7 +49,7 @@ export default function Image() {
         {image === null ? (
           <div className="image image-status p-20">
             <h1>
-              <i className="bi bi-file-earmark-lock"></i>
+              <i className="bi bi-shield-lock"></i>
             </h1>
             File is encrypted
             <Password placeholder="Enter password to decrypt" />
@@ -93,16 +105,44 @@ export default function Image() {
               </div>
 
               <div className="file-row">
-                <span>Description</span>
+                <span className="row">
+                  Description
+                  {image.description !== newDescription && (
+                    <i className="bi bi-pencil" />
+                  )}
+                </span>
+
                 <textarea
                   onInput={({ currentTarget }) => {
                     currentTarget.style.height = "";
                     currentTarget.style.height =
                       currentTarget.scrollHeight - 16 + "px";
+                    setNewDescription(currentTarget.value);
                   }}
-                  onBlur={({ currentTarget }) => {
-                    console.log("change", currentTarget.value);
+                  onBlur={async () => {
+                    if (image.description !== newDescription) {
+                      console.log("update");
+                      const encryptedContent = await encrypt(
+                        key,
+                        extractBytesFromString(newDescription),
+                        extractBytesFromString(collection.iv),
+                      );
+
+                      const file = new File(
+                        [encryptedContent],
+                        `.${imageName}`,
+                      );
+
+                      for await (const event of await uploadFile(
+                        String(collectionName),
+                        file,
+                      )) {
+                        console.log(event);
+                      }
+                      await refresh(true);
+                    }
                   }}
+                  value={newDescription}
                   placeholder="Enter a description for this file."
                 />
               </div>
@@ -111,7 +151,7 @@ export default function Image() {
                 <button
                   onClick={() => {
                     navigate(
-                      `/collection/${collection}/image/${image.previous}`,
+                      `/collection/${collectionName}/image/${image.previous}`,
                     );
                   }}
                   disabled={image.previous === null}
@@ -121,7 +161,9 @@ export default function Image() {
 
                 <button
                   onClick={() => {
-                    navigate(`/collection/${collection}/image/${image.next}`);
+                    navigate(
+                      `/collection/${collectionName}/image/${image.next}`,
+                    );
                   }}
                   disabled={image.next === null}
                 >

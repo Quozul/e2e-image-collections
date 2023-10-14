@@ -1,7 +1,8 @@
-import { encryptFile, extractBytesFromString } from "../../helpers/encryption";
-import { CollectionItem, uploadFile } from "../collection/collection";
-import { CryptoContext } from "../CryptoContext";
 import { useContext, useEffect, useState } from "react";
+
+import { encryptFile, extractBytesFromString } from "~/helpers/encryption";
+import { CollectionItem, uploadFile } from "~/components/collection/collection";
+import { CryptoContext } from "~/components/CryptoContext";
 import "./progress.css";
 
 type Props = {
@@ -26,6 +27,8 @@ export default function Upload({ collection }: Props) {
     .reduce((previousValue, currentValue) => previousValue + currentValue, 0);
 
   async function uploadFiles() {
+    if (key === null) return;
+
     try {
       const total = files
         .map((file) => file.size)

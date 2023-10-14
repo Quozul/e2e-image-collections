@@ -5,15 +5,24 @@ import {
   SetStateAction,
   useState,
 } from "react";
-import { CollectionItem, getOrCreateCollection } from "./collection/collection";
-import { fetchAndDecryptImage } from "../helpers/encryption";
-import safeMime from "../helpers/safeMime";
+import {
+  CollectionItem,
+  getOrCreateCollection,
+} from "~/components/collection/collection";
+import {
+  fetchAndDecryptDescription,
+  fetchAndDecryptImage,
+} from "~/helpers/encryption";
 
 type ContextType = {
   key: CryptoKey | null;
   setKey: Dispatch<SetStateAction<CryptoKey | null>>;
   collection: CollectionItem | null;
-  getImage: (collection: string, image: string) => Promise<ImageInformation>;
+  getImage: (
+    collection: string,
+    image: string,
+    refresh?: boolean,
+  ) => Promise<ImageInformation>;
   getCollection: (
     collection: string,
     refresh?: boolean,
@@ -34,11 +43,11 @@ export type ImageInformation = {
   url: string;
   name: string;
   type: string;
+  description: string;
   size: number;
   index: number;
   previous: string | null;
   next: string | null;
-  mime: string | null;
 };
 
 export default function CryptoContextProvider({
@@ -63,7 +72,11 @@ export default function CryptoContextProvider({
     return collection;
   }
 
-  async function getImage(collectionName: string, imageName: string) {
+  async function getImage(
+    collectionName: string,
+    imageName: string,
+    refresh = false,
+  ) {
     if (key === null) {
       throw Error("No crypto key defined.");
     }
@@ -72,20 +85,27 @@ export default function CryptoContextProvider({
     const cacheKey = `${collectionName}/${imageName}`;
     const cachedImage = imageCache?.[cacheKey];
 
-    if (typeof cachedImage !== "undefined") {
+    if (!refresh && typeof cachedImage !== "undefined") {
       return cachedImage;
     }
 
     const index = collection.files.indexOf(imageName);
-    const file = await fetchAndDecryptImage(
-      key,
-      collection.iv,
-      collection.name,
-      imageName,
-    );
+    const [file, description] = await Promise.all([
+      fetchAndDecryptImage(key, collection.iv, collection.name, imageName),
+      fetchAndDecryptDescription(
+        key,
+        collection.iv,
+        collection.name,
+        imageName,
+      ),
+    ]);
+
+    if (file === null) {
+      throw Error("Error while fetching the image.");
+    }
 
     const url = URL.createObjectURL(file);
-    const mime = await safeMime(file);
+
     const imageInformation: ImageInformation = {
       url,
       name: file.name,
@@ -94,7 +114,7 @@ export default function CryptoContextProvider({
       previous: index >= 0 ? collection.files[index - 1] ?? null : null,
       next: index >= 0 ? collection.files[index + 1] ?? null : null,
       index,
-      mime,
+      description,
     };
 
     setImageCache((prevState) => ({

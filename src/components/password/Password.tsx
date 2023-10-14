@@ -1,6 +1,6 @@
-import { getKey } from "../../helpers/encryption.ts";
-import { CryptoContext } from "../CryptoContext.tsx";
 import { HTMLProps, useContext, useState } from "react";
+import { getKey } from "~/helpers/encryption";
+import { CryptoContext } from "~/components/CryptoContext";
 
 export default function Password(props: HTMLProps<HTMLInputElement>) {
   const { setKey } = useContext(CryptoContext);

@@ -4,13 +4,15 @@ const router = new Router();
 
 async function getCollectionContent(collection: string) {
   const entries: string[] = [];
+
   for await (const dirEntry of await Deno.readDir(
     `collections/${collection}`,
   )) {
-    if (!dirEntry.name.startsWith(".")) {
+    if (dirEntry.isFile && !dirEntry.name.startsWith(".")) {
       entries.push(dirEntry.name);
     }
   }
+
   return entries;
 }
 

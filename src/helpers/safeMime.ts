@@ -1,13 +1,7 @@
 import { getType } from "mime";
 
-export default async function safeMime(file: File): Promise<string | null> {
-  // const fileType = await fileTypeFromStream(file.stream());
-  //
-  // if (fileType) {
-  //   return fileType.mime;
-  // }
-
-  const extension = file.name.split(".").pop();
+export default function safeMime(fileName: string) {
+  const extension = fileName.split(".").pop();
 
   if (!extension) {
     return null;

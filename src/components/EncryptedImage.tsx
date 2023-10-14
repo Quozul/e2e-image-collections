@@ -1,10 +1,11 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import { deleteFile } from "./collection/collection.ts";
-import useOnScreen from "../hooks/useOnScreen.ts";
 import { useNavigate } from "react-router-dom";
-import { CryptoContext, ImageInformation } from "./CryptoContext.tsx";
-import { classNames } from "../helpers/classNames.ts";
-import Password from "./password/Password.tsx";
+
+import { deleteFile } from "~/components/collection/collection";
+import useOnScreen from "~/hooks/useOnScreen";
+import { CryptoContext, ImageInformation } from "~/components/CryptoContext";
+import { classNames } from "~/helpers/classNames";
+import Password from "~/components/password/Password";
 
 type Props = {
   collectionName: string;
@@ -28,7 +29,7 @@ function EncryptedImage({ collectionName, imageName }: Props) {
 
       getImage(collectionName, imageName)
         .then((image) => {
-          setIsLoading(image.mime?.startsWith("image/") ?? false);
+          setIsLoading(image.type?.startsWith("image/") ?? false);
           setImage(image);
           setError(false);
         })
@@ -66,7 +67,7 @@ function EncryptedImage({ collectionName, imageName }: Props) {
       )}
 
       {image !== null &&
-        (image?.mime?.startsWith("image/") ? (
+        (image?.type?.startsWith("image/") ? (
           <img
             alt={name}
             onClick={() => {

@@ -1,3 +1,5 @@
+import safeMime from "~/helpers/safeMime";
+
 export function download(blob: Blob, filename: string) {
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -86,12 +88,14 @@ export async function encrypt(
 
 export async function encryptFile(key: CryptoKey, iv: Uint8Array, file: File) {
   const buffer = await file.arrayBuffer();
+  const encryptedContent = await encrypt(key, buffer, iv);
+
   const encryptedName = encodeURIComponent(
     await bytesToBase64Url(
       await encrypt(key, extractBytesFromString(file.name).buffer, iv),
     ),
   );
-  const encryptedContent = await encrypt(key, buffer, iv);
+
   return new File([encryptedContent], encryptedName, {
     type: file.type,
     lastModified: file.lastModified,
@@ -133,6 +137,35 @@ export async function fetchAndDecryptImage(
   );
 
   const name = await decryptFileName(cryptoKey, iv, imageName);
+  const type = safeMime(name) ?? "";
 
-  return new File([decrypted], name);
+  return new File([decrypted], name, { type });
+}
+
+export async function fetchAndDecryptDescription(
+  cryptoKey: CryptoKey,
+  iv: string,
+  collectionName: string,
+  imageName: string,
+) {
+  try {
+    const response = await fetch(
+      `${
+        import.meta.env.VITE_API_URL
+      }/collection/${collectionName}/image/.${imageName}`,
+    );
+    const buffer = await response.arrayBuffer();
+
+    const decrypted = await decrypt(
+      cryptoKey,
+      buffer,
+      extractBytesFromString(iv),
+    );
+
+    const decoder = new TextDecoder();
+    return decoder.decode(decrypted);
+  } catch (e) {
+    console.error(e);
+    return "";
+  }
 }

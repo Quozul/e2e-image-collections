@@ -1,5 +1,5 @@
 export function classNames(names: Record<string, boolean>): string {
-  const classes = [];
+  const classes: string[] = [];
 
   for (const className in names) {
     if (names[className]) {

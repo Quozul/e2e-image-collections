@@ -52,6 +52,11 @@
   user-select: none;
 }
 
+.image.image-status .form {
+  align-items: center;
+
+}
+
 .image.loading {
   display: none;
 }
