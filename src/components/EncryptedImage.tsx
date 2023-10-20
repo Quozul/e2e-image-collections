@@ -1,7 +1,7 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { deleteFile } from "~/components/collection/collection";
+import { deleteFile } from "~/helpers/api";
 import useOnScreen from "~/hooks/useOnScreen";
 import { CryptoContext, ImageInformation } from "~/components/CryptoContext";
 import { classNames } from "~/helpers/classNames";

@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 
 import { encryptFile, extractBytesFromString } from "~/helpers/encryption";
-import { CollectionItem, uploadFile } from "~/components/collection/collection";
+import { CollectionItem, uploadFileWithProgress } from "~/helpers/api";
 import { CryptoContext } from "~/components/CryptoContext";
 import "./progress.css";
 
@@ -22,20 +22,13 @@ export default function Upload({ collection }: Props) {
   const [uploadedFiles, setUploadedFiles] = useState<Progress[]>([]);
   const [total, setTotal] = useState(0);
 
-  const progress = uploadedFiles
-    .map(({ progress }) => progress)
-    .reduce((previousValue, currentValue) => previousValue + currentValue, 0);
+  const progress = uploadedFiles.map(({ progress }) => progress).reduce((previousValue, currentValue) => previousValue + currentValue, 0);
 
   async function uploadFiles() {
     if (key === null) return;
 
     try {
-      const total = files
-        .map((file) => file.size)
-        .reduce(
-          (previousValue, currentValue) => previousValue + currentValue,
-          0,
-        );
+      const total = files.map((file) => file.size).reduce((previousValue, currentValue) => previousValue + currentValue, 0);
       setTotal(total);
 
       const iv = extractBytesFromString(collection.iv);
@@ -44,7 +37,7 @@ export default function Upload({ collection }: Props) {
       for (const file of files) {
         const encryptedFile = await encryptFile(key, iv, file);
 
-        const upload = await uploadFile(collection.name, encryptedFile);
+        const upload = await uploadFileWithProgress(collection.name, encryptedFile);
         let uploadingFile: Progress = {
           name: file.name,
           status: "progress",

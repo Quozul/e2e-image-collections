@@ -1,32 +1,13 @@
-import {
-  createContext,
-  Dispatch,
-  PropsWithChildren,
-  SetStateAction,
-  useState,
-} from "react";
-import {
-  CollectionItem,
-  getOrCreateCollection,
-} from "~/components/collection/collection";
-import {
-  fetchAndDecryptDescription,
-  fetchAndDecryptImage,
-} from "~/helpers/encryption";
+import { createContext, Dispatch, PropsWithChildren, SetStateAction, useState } from "react";
+import { CollectionItem, getOrCreateCollection } from "~/helpers/api";
+import { fetchAndDecryptFile, fetchAndDecryptString } from "~/helpers/encryption";
 
 type ContextType = {
   key: CryptoKey | null;
   setKey: Dispatch<SetStateAction<CryptoKey | null>>;
   collection: CollectionItem | null;
-  getImage: (
-    collection: string,
-    image: string,
-    refresh?: boolean,
-  ) => Promise<ImageInformation>;
-  getCollection: (
-    collection: string,
-    refresh?: boolean,
-  ) => Promise<CollectionItem>;
+  getImage: (collection: string, image: string, refresh?: boolean) => Promise<ImageInformation>;
+  getCollection: (collection: string, refresh?: boolean) => Promise<CollectionItem>;
   closeCollection: () => void;
 };
 
@@ -50,14 +31,10 @@ export type ImageInformation = {
   next: string | null;
 };
 
-export default function CryptoContextProvider({
-  children,
-}: PropsWithChildren<{}>) {
+export default function CryptoContextProvider({ children }: PropsWithChildren<{}>) {
   const [key, setKey] = useState<CryptoKey | null>(null);
   const [collection, setCollection] = useState<CollectionItem | null>(null);
-  const [imageCache, setImageCache] = useState<
-    Record<string, ImageInformation>
-  >({});
+  const [imageCache, setImageCache] = useState<Record<string, ImageInformation>>({});
 
   async function getCollection(collectionName: string, refresh = false) {
     if (collection === null || collectionName !== collection.name || refresh) {
@@ -72,11 +49,7 @@ export default function CryptoContextProvider({
     return collection;
   }
 
-  async function getImage(
-    collectionName: string,
-    imageName: string,
-    refresh = false,
-  ) {
+  async function getImage(collectionName: string, imageName: string, refresh = false) {
     if (key === null) {
       throw Error("No crypto key defined.");
     }
@@ -91,13 +64,8 @@ export default function CryptoContextProvider({
 
     const index = collection.files.indexOf(imageName);
     const [file, description] = await Promise.all([
-      fetchAndDecryptImage(key, collection.iv, collection.name, imageName),
-      fetchAndDecryptDescription(
-        key,
-        collection.iv,
-        collection.name,
-        imageName,
-      ),
+      fetchAndDecryptFile(key, collection.iv, collection.name, imageName),
+      fetchAndDecryptString(key, collection.iv, collection.name, `.${imageName}`),
     ]);
 
     if (file === null) {

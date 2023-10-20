@@ -4,9 +4,9 @@ import { createRoot } from "react-dom/client";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "./index.css";
 
-import Collection from "~/components/collection/Collection";
+import CollectionPage from "~/components/collection/CollectionPage";
 import CryptoContextProvider from "~/components/CryptoContext";
-import Image from "~/components/image/Image";
+import ImagePage from "~/components/image/ImagePage";
 import App from "~/components/app/App";
 
 const router = createBrowserRouter([
@@ -16,11 +16,11 @@ const router = createBrowserRouter([
   },
   {
     path: "/collection/:collection",
-    element: <Collection />,
+    element: <CollectionPage />,
   },
   {
     path: "/collection/:collection/image/:image",
-    element: <Image />,
+    element: <ImagePage />,
   },
 ]);
 

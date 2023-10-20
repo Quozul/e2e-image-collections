@@ -7,11 +7,10 @@ import Upload from "~/components/upload/Upload";
 
 const PAGE_SIZE = 50;
 
-export default function Collection() {
+export default function CollectionPage() {
   const navigate = useNavigate();
   const { collection: collectionName } = useParams();
-  const { getCollection, collection, closeCollection } =
-    useContext(CryptoContext);
+  const { getCollection, collection, closeCollection } = useContext(CryptoContext);
   const [page, setPage] = useState(0);
 
   useEffect(() => {
@@ -22,8 +21,7 @@ export default function Collection() {
     <div className="column p-20">
       <div className="row w-100">
         <h1>
-          {collection?.name ?? collectionName}({collection?.files.length ?? 0}{" "}
-          files)
+          {collection?.name ?? collectionName}({collection?.files.length ?? 0} files)
         </h1>
 
         <button
@@ -47,15 +45,9 @@ export default function Collection() {
           ) : (
             <>
               <div className="container">
-                {collection.files
-                  .slice(0, (page + 1) * PAGE_SIZE)
-                  .map((name) => (
-                    <EncryptedImage
-                      key={name}
-                      collectionName={collection.name}
-                      imageName={name}
-                    />
-                  ))}
+                {collection.files.slice(0, (page + 1) * PAGE_SIZE).map((name) => (
+                  <EncryptedImage key={name} collectionName={collection.name} imageName={name} />
+                ))}
               </div>
 
               <button

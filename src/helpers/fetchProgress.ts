@@ -2,8 +2,13 @@ type T = ProgressEvent<XMLHttpRequestEventTarget>;
 
 export default async function* fetchProgress(
   url: string,
-  method: string = "GET",
-  body: ArrayBuffer | null = null,
+  {
+    method = "GET",
+    body = null,
+  }: {
+    method: string;
+    body: ArrayBuffer | null;
+  },
 ) {
   const req = new XMLHttpRequest();
   req.open(method, url);
