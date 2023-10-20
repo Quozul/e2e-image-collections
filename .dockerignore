@@ -3,3 +3,5 @@
 /collections
 *.pem
 /dist
+.env
+/decrypted

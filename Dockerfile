@@ -2,6 +2,8 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
+ARG VITE_API_URL=/api
+
 COPY package.json .
 COPY package-lock.json .
 
@@ -17,5 +19,5 @@ WORKDIR /app
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx /etc/nginx/
 
-EXPOSE 80
-ENV PORT 80
+EXPOSE 443
+ENV PORT 443

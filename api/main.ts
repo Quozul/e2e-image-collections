@@ -25,7 +25,7 @@ async function getOrCreateCollection(collection: string) {
   }
 }
 
-export async function hashString(str: string) {
+async function hashString(str: string) {
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 

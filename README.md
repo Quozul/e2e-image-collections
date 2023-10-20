@@ -14,7 +14,8 @@ This was the opportunity to learn how to use the WebCrypto API.
 1. As the WebCrypto requires https, you have to generate a SSL certificate for the API.  
    You can use the following command to generate one with OpenSSL.
    ```shell
-   openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 365 -nodes
+   openssl dhparam -out nginx/dhparam.pem 2048
+   openssl req -x509 -newkey rsa:4096 -keyout nginx/localhost.key -out nginx/localhost.crt -sha256 -days 365 -nodes
    ```
 
 2. Start the front end with

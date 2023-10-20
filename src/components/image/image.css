@@ -30,6 +30,13 @@
   }
 }
 
+.image-page .image-description {
+  flex-grow: 0;
+  flex-shrink: 1;
+  overflow: hidden;
+  min-width: 0
+}
+
 .image-row .file-row {
   display: grid;
   grid-template-columns: 1fr 2fr;
@@ -40,4 +47,10 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
+}
+
+.file-row .name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

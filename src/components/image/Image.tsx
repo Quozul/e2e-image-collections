@@ -14,6 +14,7 @@ export default function Image() {
   const { key, collection, getImage } = useContext(CryptoContext);
   const [image, setImage] = useState<ImageInformation | null>(null);
   const [newDescription, setNewDescription] = useState<string>("");
+  const [size, setSize] = useState("");
 
   async function refresh(refresh = false) {
     getImage(String(collectionName), imageName, refresh)
@@ -69,17 +70,22 @@ export default function Image() {
           <>
             <img
               className="image"
-              src={image.url}
-              alt={image.name}
-              onLoad={() => {
+              src={image?.url}
+              alt={image?.name}
+              onLoad={({ currentTarget }) => {
                 setIsLoading(false);
+                setSize(
+                  `${currentTarget.naturalWidth ?? 0} × ${
+                    currentTarget.naturalHeight ?? 0
+                  }`,
+                );
               }}
             />
 
-            <div>
+            <div className="image-description">
               <div className="file-row">
                 <span>Name</span>
-                <span>{image.name}</span>
+                <span className="name">{image.name}</span>
               </div>
 
               <div className="file-row">
@@ -102,6 +108,11 @@ export default function Image() {
               <div className="file-row">
                 <span>Index</span>
                 <span>{image.index}</span>
+              </div>
+
+              <div className="file-row">
+                <span>Size</span>
+                <span>{size}</span>
               </div>
 
               <div className="file-row">
