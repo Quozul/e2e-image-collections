@@ -13,8 +13,8 @@ function App() {
   const { setKey, getCollection } = useContext(CryptoContext);
 
   const [password, setPassword] = useState<string>("");
-  const [invalidCollectionName, setInvalidCollectionName] =
-    useState<boolean>(false);
+  const [errorOpeningCollection, setErrorOpeningCollection] = useState<boolean>(false);
+  const [invalidCollectionName, setInvalidCollectionName] = useState<boolean>(false);
   const [collection, setCollection] = useState<string>("");
 
   const classes = classNames({
@@ -29,11 +29,17 @@ function App() {
         className="form w-100"
         onSubmit={async (event) => {
           event.preventDefault();
+          setErrorOpeningCollection(false);
           if (event.currentTarget.checkValidity()) {
             getKey(password).then(setKey);
-            setPassword("");
-            await getCollection(collection);
-            navigate(`/collection/${collection}`);
+            try {
+              await getCollection(collection);
+              setPassword("");
+              navigate(`/collection/${collection}`);
+            } catch (e) {
+              console.error(e);
+              setErrorOpeningCollection(true);
+            }
           }
         }}
       >
@@ -55,10 +61,10 @@ function App() {
               setCollection(currentTarget.value);
             }}
           />
-          {invalidCollectionName && collection.length > 0 && (
+          {invalidCollectionName && (
             <div className="invalid">
-              Collection names must be 1-32 characters long and can only include
-              lowercase letters, numbers, and the special characters - _ . ~
+              Collection names must be 1-32 characters long and can only include lowercase letters, numbers, and the special characters - _
+              . ~
             </div>
           )}
         </label>
@@ -76,9 +82,10 @@ function App() {
           />
         </label>
 
-        <button disabled={!collection || invalidCollectionName}>
-          Open collection
-        </button>
+        <div className="flex">
+          <button disabled={!collection || invalidCollectionName}>Open collection</button>
+          {errorOpeningCollection && <div className="invalid">An error has occurred while opening the collection.</div>}
+        </div>
       </form>
     </div>
   );

@@ -1,5 +1,5 @@
-import { useContext, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useContext, useEffect } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import EncryptedImage from "~/components/EncryptedImage";
 import { CryptoContext } from "~/components/CryptoContext";
@@ -10,8 +10,10 @@ const PAGE_SIZE = 50;
 export default function CollectionPage() {
   const navigate = useNavigate();
   const { collection: collectionName } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { getCollection, collection, closeCollection } = useContext(CryptoContext);
-  const [page, setPage] = useState(0);
+  const page = parseInt(searchParams.get("page") ?? "0");
+  const totalPages = Math.ceil((collection?.files.length ?? 0) / PAGE_SIZE) - 1;
 
   useEffect(() => {
     getCollection(String(collectionName));
@@ -45,18 +47,36 @@ export default function CollectionPage() {
           ) : (
             <>
               <div className="container">
-                {collection.files.slice(0, (page + 1) * PAGE_SIZE).map((name) => (
+                {collection.files.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE).map((name) => (
                   <EncryptedImage key={name} collectionName={collection.name} imageName={name} />
                 ))}
               </div>
 
-              <button
-                onClick={() => {
-                  setPage((prevState) => prevState + 1);
-                }}
-              >
-                Load more
-              </button>
+              <div className="flex">
+                <button
+                  onClick={() => {
+                    const params = new URLSearchParams({ page: (page - 1).toString() });
+                    setSearchParams(params);
+                  }}
+                  disabled={page === 0}
+                >
+                  Previous page
+                </button>
+
+                <span>
+                  Page {page + 1} / {totalPages + 1}
+                </span>
+
+                <button
+                  onClick={() => {
+                    const params = new URLSearchParams({ page: (page + 1).toString() });
+                    setSearchParams(params);
+                  }}
+                  disabled={page >= totalPages}
+                >
+                  Next page
+                </button>
+              </div>
             </>
           )}
         </>
