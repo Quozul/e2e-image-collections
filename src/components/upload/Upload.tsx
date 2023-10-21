@@ -4,68 +4,55 @@ import { encryptFile, extractBytesFromString } from "~/helpers/encryption";
 import { CollectionItem, uploadFileWithProgress } from "~/helpers/api";
 import { CryptoContext } from "~/components/CryptoContext";
 import "./upload.css";
+import { classNames } from "~/helpers/classNames";
 
 type Props = {
   collection: CollectionItem;
 };
 
-type Progress = {
-  name: string;
-  status: string;
-  progress: number;
-  total: number;
-};
-
 export default function Upload({ collection }: Props) {
   const { key, getCollection } = useContext(CryptoContext);
   const [files, setFiles] = useState<File[]>([]);
-  const [uploadedFiles, setUploadedFiles] = useState<Progress[]>([]);
   const [total, setTotal] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
-  const progress = uploadedFiles.map(({ progress }) => progress).reduce((previousValue, currentValue) => previousValue + currentValue, 0);
+  const isFileSystemApiSupported = "showDirectoryPicker" in window;
 
   async function uploadFiles() {
     if (key === null) return;
 
+    setError(null);
+
     try {
       const total = files.map((file) => file.size).reduce((previousValue, currentValue) => previousValue + currentValue, 0);
       setTotal(total);
+      setProgress(0);
 
       const iv = extractBytesFromString(collection.iv);
-      const uploadedFiles: Progress[] = [];
 
-      for (const file of files) {
-        const encryptedFile = await encryptFile(key, iv, file);
+      const encryptedFiles = await Promise.all(files.map(async (file) => await encryptFile(key, iv, file)));
 
-        const upload = await uploadFileWithProgress(collection.name, encryptedFile);
-        let uploadingFile: Progress = {
-          name: file.name,
-          status: "progress",
-          progress: 0,
-          total: file.size,
-        };
+      const upload = await uploadFileWithProgress(collection.name, encryptedFiles);
 
-        for await (const event of upload) {
-          uploadingFile = {
-            name: file.name,
-            status: event.type,
-            progress: event.loaded,
-            total: event.total,
-          };
-          setUploadedFiles([...uploadedFiles, uploadingFile]);
-        }
-
-        uploadedFiles.push(uploadingFile);
-        setUploadedFiles(uploadedFiles);
+      for await (const event of upload) {
+        setProgress(event.loaded);
       }
     } catch (e) {
       console.error(e);
+
+      if (e instanceof ProgressEvent) {
+        setError("Upload failed. Please check network connectivity.");
+      } else if (e instanceof DOMException) {
+        setError("Upload failed. You likely selected too much files to upload.");
+      } else {
+        setError(String(e));
+      }
     }
   }
 
   useEffect(() => {
     if (files.length > 0) {
-      setUploadedFiles([]);
       uploadFiles().then(() => {
         setFiles([]);
         getCollection(collection.name, true);
@@ -73,18 +60,48 @@ export default function Upload({ collection }: Props) {
     }
   }, [files]);
 
+  const classes = classNames({
+    "grid cols-2 position-relative grow-1": isFileSystemApiSupported,
+    "position-relative grow-1": !isFileSystemApiSupported,
+  });
+
   return (
-    <label className="flex-col position-relative">
-      <input
-        className="cursor-pointer"
-        type="file"
-        multiple
-        disabled={files.length > 0}
-        onChange={({ currentTarget }) => {
-          setFiles(Array.from(currentTarget.files ?? []));
-          currentTarget.value = "";
-        }}
-      />
+    <div className={classes}>
+      <label className="flex-col cursor-pointer">
+        <input
+          className="none"
+          type="file"
+          multiple
+          disabled={files.length > 0}
+          onChange={({ currentTarget }) => {
+            setFiles(Array.from(currentTarget.files ?? []));
+            currentTarget.value = "";
+          }}
+        />
+
+        <div className="btn">Upload files</div>
+
+        {error !== null && <span className="text-danger">{error}</span>}
+      </label>
+
+      {isFileSystemApiSupported && (
+        <label className="flex-col cursor-pointer">
+          <button
+            onClick={async () => {
+              // TODO:
+              //const dirHandle = await window.showDirectoryPicker();
+              //const entries = dirHandle.entries();
+              /*for await (const [name, handle] of entries) {
+                console.log(name, handle);
+              }*/
+            }}
+          >
+            Upload directory
+          </button>
+
+          {error !== null && <span className="text-danger">{error}</span>}
+        </label>
+      )}
 
       {files.length > 0 && (
         <progress
@@ -95,6 +112,6 @@ export default function Upload({ collection }: Props) {
           {(progress / total) * 100}%
         </progress>
       )}
-    </label>
+    </div>
   );
 }

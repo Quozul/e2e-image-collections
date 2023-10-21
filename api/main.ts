@@ -60,14 +60,14 @@ router
 
     const body = await context.request.body({ type: "form-data" });
     const data = await body.value.read();
-    const files = data.files;
+    const uploadedFiles = data.files;
 
-    if (!files || files.length === 0) {
+    if (!uploadedFiles || uploadedFiles.length === 0) {
       context.response.status = 400;
       return;
     }
 
-    for (const { filename, originalName } of data.files) {
+    for (const { filename, originalName } of uploadedFiles) {
       if (COLLECTION_RE.test(collection) && IMAGE_RE.test(originalName)) {
         const newPath = `collections/${collection}/${originalName}`;
         try {
@@ -82,7 +82,12 @@ router
       }
     }
 
-    context.response.status = 201;
+    const files = await getOrCreateCollection(collection);
+    const iv = await hashString(collection);
+
+    context.response.body = { files, iv, name: collection };
+
+    context.response.status = 200;
   })
   .get("/collection/:collection/image/:image", async (context) => {
     const collection = context?.params?.collection;

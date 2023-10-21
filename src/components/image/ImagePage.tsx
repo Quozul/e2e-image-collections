@@ -61,13 +61,28 @@ export default function ImagePage() {
 
         {image !== null && (
           <>
-            <img
-              className="h-100 object-fit-contain overflow-hidden rounded-1 cursor-zoom-in"
-              src={image.url}
-              alt={image.name}
-              onLoad={onImageLoad}
-              onClick={enlargeImage}
-            />
+            {image?.type?.startsWith("image/") ? (
+              <img
+                className="h-100 object-fit-contain overflow-hidden rounded-1 cursor-zoom-in"
+                src={image.url}
+                alt={image.name}
+                onLoad={onImageLoad}
+                onClick={enlargeImage}
+              />
+            ) : (
+              <div
+                onClick={() => {
+                  navigate(`/collection/${collectionName}/image/${imageName}`);
+                }}
+                className="overflow-hidden rounded-1 flex-col align-center p-6"
+              >
+                <h1>
+                  <i className="bi bi-file-earmark" />
+                </h1>
+                Cannot display file preview
+                <button onClick={enlargeImage}>Download</button>
+              </div>
+            )}
 
             <div className="list-group">
               <div className="list-entry grid cols-2">
@@ -92,10 +107,12 @@ export default function ImagePage() {
                 <span>{image.index}</span>
               </div>
 
-              <div className="list-entry grid cols-2">
-                <span>Dimensions</span>
-                <span>{dimensions}</span>
-              </div>
+              {image.type?.startsWith("image/") && (
+                <div className="list-entry grid cols-2">
+                  <span>Dimensions</span>
+                  <span>{dimensions}</span>
+                </div>
+              )}
 
               <div className="list-entry grid cols-2">
                 <span className="flex">

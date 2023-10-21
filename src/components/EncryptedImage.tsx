@@ -21,6 +21,7 @@ function EncryptedImage({ collectionName, imageName, cover }: Props) {
   const navigate = useNavigate();
   const { getImage, getCollection, key } = useContext(CryptoContext);
   const [image, setImage] = useState<ImageInformation | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const name = image?.name ?? imageName;
 
@@ -83,7 +84,12 @@ function EncryptedImage({ collectionName, imageName, cover }: Props) {
             }}
           />
         ) : (
-          <div className="image image-status">
+          <div
+            onClick={() => {
+              navigate(`/collection/${collectionName}/image/${imageName}`);
+            }}
+            className="rounded-1 aspect-ratio-square justify-center flex-col align-center cursor-pointer"
+          >
             <h1>
               <i className="bi bi-file-earmark" />
             </h1>
@@ -98,10 +104,16 @@ function EncryptedImage({ collectionName, imageName, cover }: Props) {
 
         <button
           onClick={async () => {
-            await deleteFile(collectionName, imageName);
-            await getCollection(collectionName, true);
+            setIsDeleting(true);
+            try {
+              await deleteFile(collectionName, imageName);
+              await getCollection(collectionName, true);
+            } finally {
+              setIsDeleting(false);
+            }
           }}
           className="danger"
+          disabled={isDeleting}
         >
           Delete
         </button>

@@ -21,11 +21,14 @@ export async function getOrCreateCollection(collection: string): Promise<Collect
   return await response.json();
 }
 
-export async function uploadFileWithProgress(collection: string, file: File) {
+export async function uploadFileWithProgress(collection: string, files: File[]) {
   const url = `${import.meta.env.VITE_API_URL}/collection/${collection}`;
 
   const formData = new FormData();
-  formData.append("files", file, file.name);
+
+  for (const file of files) {
+    formData.append("files", file, file.name);
+  }
 
   return fetchProgress(url, {
     method: "post",

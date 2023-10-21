@@ -18,14 +18,15 @@ export default function CollectionPage() {
     collection,
     closeCollection,
     nextPage,
+    setPage,
+    pageSize,
+    setPageSize,
   } = useCollection(String(collectionName));
 
   return (
     <div className="flex-col p-2">
-      <div className="flex w-100 justify-space-between">
-        <h1>
-          {collection?.name ?? collectionName}({collection?.files.length ?? 0} files)
-        </h1>
+      <div className="flex wrap-1 w-100 justify-space-between">
+        <h1>Collection: {collection?.name ?? collectionName}</h1>
 
         <button
           onClick={() => {
@@ -42,7 +43,7 @@ export default function CollectionPage() {
         "Collection is not defined"
       ) : (
         <>
-          <div className="flex">
+          <div className="flex-col sm:flex-row">
             <Upload collection={collection} />
 
             <label className="flex align-center cursor-pointer user-select-none">
@@ -58,27 +59,78 @@ export default function CollectionPage() {
           </div>
 
           {collection.files.length === 0 ? (
-            "The collection is empty"
+            <div className="flex p-2 bg-background-muted justify-center">The collection is empty.</div>
           ) : (
             <>
-              <div className="grid cols-1 sm:cols-2 md:cols-3 lg:cols-4 xxl:cols-6 grow-1">
-                {paginatedCollection.map((name) => (
-                  <EncryptedImage cover={cover} key={name} collectionName={collection.name} imageName={name} />
-                ))}
-              </div>
+              {paginatedCollection.length > 0 ? (
+                <div className="grid cols-1 sm:cols-2 md:cols-3 lg:cols-4 xxl:cols-6 grow-1">
+                  {paginatedCollection.map((name) => (
+                    <EncryptedImage cover={cover} key={name} collectionName={collection.name} imageName={name} />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex p-2 bg-background-muted justify-center">This page is empty.</div>
+              )}
 
               <div className="flex align-center justify-center">
-                <button onClick={previousPage} disabled={page === 0}>
-                  Previous page
+                <label className="none lg:flex align-center">
+                  Elements per page:
+                  <select
+                    value={pageSize}
+                    onChange={({ currentTarget }) => {
+                      setPageSize(parseInt(currentTarget.value));
+                    }}
+                  >
+                    <option value={12}>12</option>
+                    <option value={24}>24</option>
+                    <option value={48}>48</option>
+                    <option value={96}>96</option>
+                  </select>
+                </label>
+
+                <button
+                  className="none lg:block"
+                  onClick={() => {
+                    setPage(0);
+                  }}
+                  disabled={page <= 0}
+                >
+                  <i className="bi bi-chevron-double-left" />
                 </button>
 
-                <span>
-                  Page {page + 1} / {totalPages + 1}
-                </span>
+                <button onClick={previousPage} disabled={page <= 0}>
+                  Previous
+                </button>
+
+                <div className="flex align-center">
+                  Page:
+                  <input
+                    onInput={({ currentTarget }) => {
+                      setPage(currentTarget.valueAsNumber);
+                    }}
+                    value={page}
+                    type="number"
+                    max={totalPages}
+                    min={0}
+                  />
+                  of {totalPages}
+                </div>
 
                 <button onClick={nextPage} disabled={page >= totalPages}>
-                  Next page
+                  Next
                 </button>
+
+                <button
+                  className="none lg:block"
+                  onClick={() => {
+                    setPage(totalPages);
+                  }}
+                  disabled={page >= totalPages}
+                >
+                  <i className="bi bi-chevron-double-right" />
+                </button>
+
+                <span className="none lg:block">{collection.files.length} total elements</span>
               </div>
             </>
           )}
