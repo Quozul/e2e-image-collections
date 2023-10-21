@@ -1,0 +1,16 @@
+.progress-bar {
+    appearance: none;
+    cursor: progress;
+    overflow: hidden;
+}
+
+.progress-bar::-webkit-progress-bar {
+    background-color: var(--color-text-inverted);
+    border:1px solid var(--color-text);
+    border-radius: 0.5rem;
+}
+
+.progress-bar::-webkit-progress-value {
+    background-color: var(--color-text);
+    border-radius: 0.5rem;
+}

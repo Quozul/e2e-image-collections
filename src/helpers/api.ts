@@ -15,18 +15,21 @@ export async function getOrCreateCollection(collection: string): Promise<Collect
 
   const response = await fetch(url, {
     mode: "cors",
-    method: "post",
+    method: "get",
   });
 
   return await response.json();
 }
 
 export async function uploadFileWithProgress(collection: string, file: File) {
-  const url = `${import.meta.env.VITE_API_URL}/collection/${collection}/image/${file.name}`;
+  const url = `${import.meta.env.VITE_API_URL}/collection/${collection}`;
+
+  const formData = new FormData();
+  formData.append("files", file, file.name);
 
   return fetchProgress(url, {
     method: "post",
-    body: await file.arrayBuffer(),
+    body: formData,
   });
 }
 

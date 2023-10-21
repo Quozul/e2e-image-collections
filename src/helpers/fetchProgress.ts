@@ -7,7 +7,7 @@ export default async function* fetchProgress(
     body = null,
   }: {
     method: string;
-    body: ArrayBuffer | null;
+    body: XMLHttpRequestBodyInit | null;
   },
 ) {
   const req = new XMLHttpRequest();

@@ -5,25 +5,12 @@ async function getKey(password: string): Promise<CryptoKey> {
   const encoder = new TextEncoder();
   const encodedPassword = encoder.encode(password);
 
-  const keyData = await crypto.subtle.digest(
-    { name: "SHA-256" },
-    encodedPassword,
-  );
+  const keyData = await crypto.subtle.digest({ name: "SHA-256" }, encodedPassword);
 
-  return await crypto.subtle.importKey(
-    "raw",
-    keyData,
-    { name: "AES-GCM" },
-    false,
-    ["encrypt", "decrypt"],
-  );
+  return await crypto.subtle.importKey("raw", keyData, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
 }
 
-async function decrypt(
-  key: CryptoKey,
-  data: BufferSource,
-  iv: Uint8Array,
-): Promise<ArrayBuffer> {
+async function decrypt(key: CryptoKey, data: BufferSource, iv: Uint8Array): Promise<ArrayBuffer> {
   return await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
 }
 
@@ -47,16 +34,8 @@ function extractBytesFromString(str: string): Uint8Array {
   return encoder.encode(str);
 }
 
-async function decryptFileName(
-  cryptoKey: CryptoKey,
-  iv: Uint8Array,
-  name: string,
-): Promise<string> {
-  const decryptedBase64Name = await decrypt(
-    cryptoKey,
-    decodeBase64UrlToArrayBuffer(name),
-    iv,
-  );
+async function decryptFileName(cryptoKey: CryptoKey, iv: Uint8Array, name: string): Promise<string> {
+  const decryptedBase64Name = await decrypt(cryptoKey, decodeBase64UrlToArrayBuffer(name), iv);
 
   const decoder = new TextDecoder();
   return decoder.decode(decryptedBase64Name);
@@ -66,10 +45,7 @@ async function hashString(str: string) {
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
-  const iv = await crypto.subtle.digest(
-    "SHA-256",
-    encoder.encode(str + "salt"),
-  );
+  const iv = await crypto.subtle.digest("SHA-256", encoder.encode(str + "salt"));
   return decoder.decode(iv);
 }
 
@@ -80,7 +56,6 @@ const output = `decrypted/${collectionName}`;
 const cryptoKey = await getKey(password);
 
 const iv = extractBytesFromString(await hashString(collectionName));
-console.log(iv);
 
 for (const dirEntry of await readdir(collectionPath)) {
   if (!dirEntry.startsWith(".")) {

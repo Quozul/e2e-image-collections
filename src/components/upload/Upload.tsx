@@ -3,6 +3,7 @@ import { useContext, useEffect, useState } from "react";
 import { encryptFile, extractBytesFromString } from "~/helpers/encryption";
 import { CollectionItem, uploadFileWithProgress } from "~/helpers/api";
 import { CryptoContext } from "~/components/CryptoContext";
+import "./upload.css";
 
 type Props = {
   collection: CollectionItem;
@@ -73,53 +74,27 @@ export default function Upload({ collection }: Props) {
   }, [files]);
 
   return (
-    <div className="progress-container">
-      <label className="progress-label">
-        <input
-          className="upload-input"
-          type="file"
-          multiple
-          disabled={files.length > 0}
-          onChange={({ currentTarget }) => {
-            setFiles(Array.from(currentTarget.files ?? []));
-          }}
-        />
+    <label className="flex-col position-relative">
+      <input
+        className="cursor-pointer"
+        type="file"
+        multiple
+        disabled={files.length > 0}
+        onChange={({ currentTarget }) => {
+          setFiles(Array.from(currentTarget.files ?? []));
+          currentTarget.value = "";
+        }}
+      />
 
-        {files.length > 0 && (
-          <progress className="progress-bar" max={total} value={progress}>
-            {(progress / total) * 100}%
-          </progress>
-        )}
-      </label>
-
-      <div className="upload-list">
-        {files.map((file) => {
-          const element = uploadedFiles.find(({ name }) => file.name === name);
-          const status = element?.status ?? null;
-          const progress = element?.progress ?? 0;
-          const total = element?.total ?? 0;
-
-          return (
-            <div className="file-row" key={file.name}>
-              <div className="inner">
-                {file.name}
-
-                {status === "load" ? (
-                  <i className="bi bi-check" />
-                ) : status === "error" ? (
-                  <i className="bi bi-x" />
-                ) : (
-                  <i className="bi bi-hourglass-split" />
-                )}
-              </div>
-
-              <progress className="progress-bar" max={total} value={progress}>
-                {(progress / total) * 100}%
-              </progress>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+      {files.length > 0 && (
+        <progress
+          className="progress-bar position-absolute top-0 bottom-0 left-0 right-0 w-100 h-100 rounded-1"
+          max={total}
+          value={progress}
+        >
+          {(progress / total) * 100}%
+        </progress>
+      )}
+    </label>
   );
 }

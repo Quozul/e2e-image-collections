@@ -68,7 +68,6 @@ export async function encryptFile(key: CryptoKey, iv: Uint8Array, file: File) {
   const encryptedName = encodeURIComponent(await bytesToBase64Url(await encrypt(key, extractBytesFromString(file.name).buffer, iv)));
 
   return new File([encryptedContent], encryptedName, {
-    type: file.type,
     lastModified: file.lastModified,
   });
 }

@@ -1126,6 +1126,14 @@ small, .text_small {
   cursor: pointer;
 }
 
+.cursor-zoom-in {
+  cursor: zoom-in;
+}
+
+.cursor-zoom-out {
+  cursor: zoom-out;
+}
+
 .top-0 {
   top: 0rem;
 }

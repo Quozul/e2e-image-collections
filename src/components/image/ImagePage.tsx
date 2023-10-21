@@ -19,6 +19,12 @@ export default function ImagePage() {
     nextImageUrl,
   } = useImage(String(collectionName), String(imageName));
 
+  function enlargeImage() {
+    if (image !== null) {
+      window.open(image.url, "_blank");
+    }
+  }
+
   return (
     <div className="flex-col overflow-hidden image-page p-2">
       <div className="flex justify-space-between w-100">
@@ -55,7 +61,13 @@ export default function ImagePage() {
 
         {image !== null && (
           <>
-            <img className="h-100 object-fit-contain overflow-hidden rounded-1" src={image.url} alt={image.name} onLoad={onImageLoad} />
+            <img
+              className="h-100 object-fit-contain overflow-hidden rounded-1 cursor-zoom-in"
+              src={image.url}
+              alt={image.name}
+              onLoad={onImageLoad}
+              onClick={enlargeImage}
+            />
 
             <div className="list-group">
               <div className="list-entry grid cols-2">
