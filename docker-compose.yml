@@ -14,5 +14,9 @@ services:
       dockerfile: ./Dockerfile
       args:
         VITE_API_URL: /api
-    ports:
-      - "443:443"
+    labels:
+      - "traefik.http.routers.vuestone.rule=Host(`myencryptedsecrets.quozul.dev`)"
+      - "traefik.http.routers.vuestone.tls.certresolver=myresolver"
+      - "traefik.http.routers.vuestone.tls.domains[0].main=myencryptedsecrets.quozul.dev"
+      - "traefik.http.routers.vuestone.tls=true"
+      - "traefik.http.services.vuestone.loadbalancer.server.port=80"

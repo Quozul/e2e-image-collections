@@ -2,6 +2,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "bootstrap-icons/font/bootstrap-icons.css";
+import "./style.css";
 import "./index.css";
 
 import CollectionPage from "~/components/collection/CollectionPage";

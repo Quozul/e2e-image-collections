@@ -1,4 +1,4 @@
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import EncryptedImage from "~/components/EncryptedImage";
@@ -14,14 +14,15 @@ export default function CollectionPage() {
   const { getCollection, collection, closeCollection } = useContext(CryptoContext);
   const page = parseInt(searchParams.get("page") ?? "0");
   const totalPages = Math.ceil((collection?.files.length ?? 0) / PAGE_SIZE) - 1;
+  const [cover, setCover] = useState(true);
 
   useEffect(() => {
     getCollection(String(collectionName));
   }, [collectionName]);
 
   return (
-    <div className="column p-20">
-      <div className="row w-100">
+    <div className="flex-col p-2">
+      <div className="flex w-100 justify-space-between">
         <h1>
           {collection?.name ?? collectionName}({collection?.files.length ?? 0} files)
         </h1>
@@ -31,6 +32,7 @@ export default function CollectionPage() {
             closeCollection();
             navigate("/");
           }}
+          className="danger"
         >
           Close collection
         </button>
@@ -40,19 +42,32 @@ export default function CollectionPage() {
         "Collection is not defined"
       ) : (
         <>
-          <Upload collection={collection} />
+          <div className="flex">
+            <Upload collection={collection} />
+
+            <label className="flex align-center cursor-pointer user-select-none">
+              Full image in preview
+              <input
+                type="checkbox"
+                checked={!cover}
+                onChange={({ currentTarget }) => {
+                  setCover(!currentTarget.checked);
+                }}
+              />
+            </label>
+          </div>
 
           {collection.files.length === 0 ? (
             "The collection is empty"
           ) : (
             <>
-              <div className="container">
+              <div className="grid cols-1 sm:cols-2 md:cols-3 lg:cols-4 xl:cols-5 xxl:cols-6 grow-1">
                 {collection.files.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE).map((name) => (
-                  <EncryptedImage key={name} collectionName={collection.name} imageName={name} />
+                  <EncryptedImage cover={cover} key={name} collectionName={collection.name} imageName={name} />
                 ))}
               </div>
 
-              <div className="flex">
+              <div className="flex align-center justify-center">
                 <button
                   onClick={() => {
                     const params = new URLSearchParams({ page: (page - 1).toString() });

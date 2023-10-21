@@ -3,7 +3,6 @@ import { useContext, useEffect, useState } from "react";
 import { encryptFile, extractBytesFromString } from "~/helpers/encryption";
 import { CollectionItem, uploadFileWithProgress } from "~/helpers/api";
 import { CryptoContext } from "~/components/CryptoContext";
-import "./progress.css";
 
 type Props = {
   collection: CollectionItem;

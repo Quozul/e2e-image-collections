@@ -10,9 +10,10 @@ import Password from "~/components/password/Password";
 type Props = {
   collectionName: string;
   imageName: string;
+  cover: boolean;
 };
 
-function EncryptedImage({ collectionName, imageName }: Props) {
+function EncryptedImage({ collectionName, imageName, cover }: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -41,25 +42,27 @@ function EncryptedImage({ collectionName, imageName }: Props) {
   }, [isVisible, image, collectionName, imageName, key]);
 
   const imageClasses = classNames({
-    image: true,
-    loading: isLoading,
+    "rounded-1 grow-1 aspect-ratio-square cursor-pointer justify-center flex-col align-center": true,
+    "object-fit-cover": cover,
+    "object-fit-contain": !cover,
+    none: isLoading,
   });
 
   return (
-    <div className="image-container" ref={ref}>
+    <div className="flex-col p-1 bg-background-muted rounded-1 overflow-hidden" ref={ref}>
       {image === null ? (
-        <div className="image image-status">
+        <div className="rounded-1 aspect-ratio-square justify-center flex-col align-center">
           <h1>
-            <i className="bi bi-shield-lock"></i>
+            <i className="bi bi-shield-lock" />
           </h1>
           File is encrypted
           <Password placeholder="Enter password to decrypt" />
         </div>
       ) : (
         isLoading && (
-          <div className="image image-status">
+          <div className="rounded-1 aspect-ratio-square justify-center flex-col align-center">
             <h1>
-              <i className="bi bi-hourglass"></i>
+              <i className="bi bi-hourglass" />
             </h1>
             Image is loading
           </div>
@@ -82,14 +85,14 @@ function EncryptedImage({ collectionName, imageName }: Props) {
         ) : (
           <div className="image image-status">
             <h1>
-              <i className="bi bi-file-earmark"></i>
+              <i className="bi bi-file-earmark" />
             </h1>
             Cannot display file preview
           </div>
         ))}
 
-      <div className="row space-between">
-        <span className="image-name" title={name}>
+      <div className="flex justify-space-between align-center">
+        <span className="text-ellipsis" title={name}>
           {name}
         </span>
 
@@ -98,6 +101,7 @@ function EncryptedImage({ collectionName, imageName }: Props) {
             await deleteFile(collectionName, imageName);
             await getCollection(collectionName, true);
           }}
+          className="danger"
         >
           Delete
         </button>

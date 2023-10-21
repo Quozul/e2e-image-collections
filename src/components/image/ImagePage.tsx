@@ -1,6 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
 import Password from "~/components/password/Password";
-import "./image.css";
 import useImage from "~/components/image/useImage";
 
 export default function ImagePage() {
@@ -21,9 +20,9 @@ export default function ImagePage() {
   } = useImage(String(collectionName), String(imageName));
 
   return (
-    <div className="image-page">
-      <div className="row w-100">
-        <h1 className="title">{image?.name ?? imageName}</h1>
+    <div className="flex-col overflow-hidden image-page p-2">
+      <div className="flex justify-space-between w-100">
+        <h1 className="text-ellipsis">{image?.name ?? imageName}</h1>
 
         <button
           onClick={() => {
@@ -34,9 +33,9 @@ export default function ImagePage() {
         </button>
       </div>
 
-      <div className="image-row">
+      <div className="grid cols-1 lg:cols-2-1 overflow-hidden">
         {image === null ? (
-          <div className="image image-status p-20">
+          <div className="overflow-hidden rounded-1 flex-col align-center p-6">
             <h1>
               <i className="bi bi-shield-lock" />
             </h1>
@@ -45,7 +44,7 @@ export default function ImagePage() {
           </div>
         ) : (
           isLoading && (
-            <div className="image image-status p-20">
+            <div className="overflow-hidden rounded-1 flex-col align-center p-6">
               <h1>
                 <i className="bi bi-hourglass" />
               </h1>
@@ -56,36 +55,38 @@ export default function ImagePage() {
 
         {image !== null && (
           <>
-            <img className="image" src={image.url} alt={image.name} onLoad={onImageLoad} />
+            <img className="h-100 object-fit-contain overflow-hidden rounded-1" src={image.url} alt={image.name} onLoad={onImageLoad} />
 
-            <div className="image-description">
-              <div className="file-row">
+            <div className="list-group">
+              <div className="list-entry grid cols-2">
                 <span>Name</span>
-                <span className="name">{image.name}</span>
+                <span className="text-ellipsis" title={image.name}>
+                  {image.name}
+                </span>
               </div>
 
-              <div className="file-row">
+              <div className="list-entry grid cols-2">
                 <span>Size</span>
                 <span>{image.size}</span>
               </div>
 
-              <div className="file-row">
+              <div className="list-entry grid cols-2">
                 <span>Type</span>
                 <span>{image.type || "unknown"}</span>
               </div>
 
-              <div className="file-row">
+              <div className="list-entry grid cols-2">
                 <span>Index</span>
                 <span>{image.index}</span>
               </div>
 
-              <div className="file-row">
+              <div className="list-entry grid cols-2">
                 <span>Dimensions</span>
                 <span>{dimensions}</span>
               </div>
 
-              <div className="file-row">
-                <span className="row">
+              <div className="list-entry grid cols-2">
+                <span className="flex">
                   Description
                   {isNewDescription && <i className="bi bi-pencil" />}
                 </span>
@@ -102,7 +103,7 @@ export default function ImagePage() {
                 />
               </div>
 
-              <div className="file-row actions">
+              <div className="list-entry grid cols-2">
                 <button
                   onClick={() => {
                     navigate(previousImageUrl);

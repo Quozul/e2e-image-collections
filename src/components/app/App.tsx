@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { getKey } from "~/helpers/encryption";
 import { CryptoContext } from "~/components/CryptoContext";
 import { classNames } from "~/helpers/classNames";
-import "./app.css";
 
 const COLLECTION_RE = /^[a-z0-9-_.~]{1,32}$/;
 
@@ -18,15 +17,15 @@ function App() {
   const [collection, setCollection] = useState<string>("");
 
   const classes = classNames({
-    invalid: invalidCollectionName,
+    "border-danger": invalidCollectionName,
   });
 
   return (
-    <div className="column p-20">
+    <div className="flex-col p-2">
       <h1>Open a collection</h1>
 
       <form
-        className="form w-100"
+        className="flex-col w-100"
         onSubmit={async (event) => {
           event.preventDefault();
           setErrorOpeningCollection(false);
@@ -43,7 +42,7 @@ function App() {
           }
         }}
       >
-        <label className="label">
+        <label className="flex-col">
           Collection
           <input
             type="text"
@@ -62,14 +61,14 @@ function App() {
             }}
           />
           {invalidCollectionName && (
-            <div className="invalid">
+            <div className="text-danger">
               Collection names must be 1-32 characters long and can only include lowercase letters, numbers, and the special characters - _
               . ~
             </div>
           )}
         </label>
 
-        <label className="label">
+        <label className="flex-col">
           Password
           <input
             type="password"
@@ -82,7 +81,7 @@ function App() {
           />
         </label>
 
-        <div className="flex">
+        <div className="flex align-center">
           <button disabled={!collection || invalidCollectionName}>Open collection</button>
           {errorOpeningCollection && <div className="invalid">An error has occurred while opening the collection.</div>}
         </div>

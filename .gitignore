@@ -26,5 +26,8 @@ dist-ssr
 /collections
 /decrypted
 *.pem
+*.crt
+*.key
 
 .env
+
