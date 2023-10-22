@@ -11,7 +11,7 @@ export async function getOrCreateCollection(collection: string): Promise<Collect
     throw Error("Collection name must not be empty.");
   }
 
-  const url = `${import.meta.env.VITE_API_URL}/collection/${collection}`;
+  const url = `${import.meta.env.VITE_API_URL}/collection/${collection}?show_hidden_files=true`;
 
   const response = await fetch(url, {
     mode: "cors",
@@ -36,9 +36,16 @@ export async function uploadFileWithProgress(collection: string, files: File[]) 
   });
 }
 
-export async function uploadFile(collection: string, file: File) {
-  const url = `${import.meta.env.VITE_API_URL}/collection/${collection}/image/${file.name}`;
-  return fetch(url, { body: await file.arrayBuffer(), method: "post" });
+export async function uploadFile(collection: string, files: File[]) {
+  const url = `${import.meta.env.VITE_API_URL}/collection/${collection}`;
+
+  const formData = new FormData();
+
+  for (const file of files) {
+    formData.append("files", file, file.name);
+  }
+
+  return fetch(url, { body: formData, method: "post" });
 }
 
 export async function deleteFile(collection: string, name: string) {

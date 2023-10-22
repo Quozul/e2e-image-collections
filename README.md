@@ -15,7 +15,7 @@ This was the opportunity to learn how to use the WebCrypto API.
    You can use the following command to generate one with OpenSSL.
    ```shell
    openssl dhparam -out nginx/dhparam.pem 2048
-   openssl req -x509 -newkey rsa:4096 -keyout nginx/localhost.key -out nginx/localhost.crt -sha256 -days 365 -nodes
+   openssl req -x509 -newkey rsa:4096 -keyout nginx/ssl/localhost.key -out nginx/ssl/localhost.crt -sha256 -days 365 -nodes
    ```
 
 2. Start the front end with

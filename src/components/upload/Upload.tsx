@@ -29,7 +29,7 @@ export default function Upload({ collection }: Props) {
       setTotal(total);
       setProgress(0);
 
-      const iv = extractBytesFromString(collection.iv);
+      const iv = extractBytesFromString(atob(collection.iv));
 
       const encryptedFiles = await Promise.all(files.map(async (file) => await encryptFile(key, iv, file)));
 
@@ -44,7 +44,7 @@ export default function Upload({ collection }: Props) {
       if (e instanceof ProgressEvent) {
         setError("Upload failed. Please check network connectivity.");
       } else if (e instanceof DOMException) {
-        setError("Upload failed. You likely selected too much files to upload.");
+        setError("Upload failed. You likely selected too much files or the files are too large to upload.");
       } else {
         setError(String(e));
       }
@@ -79,7 +79,9 @@ export default function Upload({ collection }: Props) {
           }}
         />
 
-        <div className="btn">Upload files</div>
+        <div className="btn" aria-disabled={files.length > 0 || key === null}>
+          Upload files
+        </div>
 
         {error !== null && <span className="text-danger">{error}</span>}
       </label>
@@ -95,8 +97,9 @@ export default function Upload({ collection }: Props) {
                 console.log(name, handle);
               }*/
             }}
+            disabled={true}
           >
-            Upload directory
+            Upload directory (wip)
           </button>
 
           {error !== null && <span className="text-danger">{error}</span>}

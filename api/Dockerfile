@@ -1,19 +1,31 @@
-FROM alpine:edge
+FROM rust:slim-buster as build
 
-RUN apk --update add deno
+# create a new empty shell project
+RUN USER=root cargo new --bin rustful-webftp
+WORKDIR /rustful-webftp
 
-WORKDIR /app
+# copy over your manifests
+COPY ./Cargo.lock ./Cargo.lock
+COPY ./Cargo.toml ./Cargo.toml
 
-RUN mkdir collections
+# this build step will cache your dependencies
+RUN cargo build --release
+RUN rm src/*.rs
 
-COPY api/deps.ts .
-RUN deno cache deps.ts
+# copy your source tree
+COPY ./src ./src
 
-COPY api .
-RUN deno cache main.ts
+# build for release
+RUN rm ./target/release/deps/rustful_webftp*
+RUN cargo build --release
 
-ENV PORT 8000
-ENV SALT salt
-EXPOSE $PORT
+# our final base
+FROM rust:1.64-slim-buster
 
-CMD deno run --allow-env --allow-net --allow-read --allow-write main.ts
+# copy the build artifact from the build stage
+COPY --from=build /rustful-webftp/target/release/rustful-webftp .
+
+EXPOSE 8000
+
+# set the startup command to run your binary
+CMD ["./rustful-webftp"]

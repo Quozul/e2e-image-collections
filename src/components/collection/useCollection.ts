@@ -15,7 +15,8 @@ export default function useCollection(collectionName: string) {
   }, [collectionName]);
 
   useEffect(() => {
-    const newContent = collection?.files.slice(currentPage * pageSize, (currentPage + 1) * pageSize) ?? [];
+    const newContent =
+      collection?.files.filter((name) => !name.startsWith(".")).slice(currentPage * pageSize, (currentPage + 1) * pageSize) ?? [];
     setPaginatedCollection(newContent);
   }, [collection, currentPage, pageSize]);
 

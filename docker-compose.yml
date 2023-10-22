@@ -3,8 +3,8 @@ version: "3.8"
 services:
   api:
     build:
-      context: .
-      dockerfile: ./api/Dockerfile
+      context: ./api
+      dockerfile: ./Dockerfile
     volumes:
       - "./collections:/app/collections"
 
@@ -14,9 +14,6 @@ services:
       dockerfile: ./Dockerfile
       args:
         VITE_API_URL: /api
-    labels:
-      - "traefik.http.routers.vuestone.rule=Host(`myencryptedsecrets.quozul.dev`)"
-      - "traefik.http.routers.vuestone.tls.certresolver=myresolver"
-      - "traefik.http.routers.vuestone.tls.domains[0].main=myencryptedsecrets.quozul.dev"
-      - "traefik.http.routers.vuestone.tls=true"
-      - "traefik.http.services.vuestone.loadbalancer.server.port=80"
+    ports:
+      - "80:80"
+      - "443:443"

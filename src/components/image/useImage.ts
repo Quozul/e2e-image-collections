@@ -50,9 +50,9 @@ export default function useImage(collectionName: string, imageName: string) {
       if (image === null || collection === null || key === null) return;
 
       if (image.description !== newDescription) {
-        const file = await encryptString(key, extractBytesFromString(collection.iv), newDescription, `.${imageName}`);
+        const file = await encryptString(key, extractBytesFromString(atob(collection.iv)), newDescription, `.${imageName}`);
 
-        await uploadFile(String(collectionName), file);
+        await uploadFile(String(collectionName), [file]);
 
         await refresh(true);
       }

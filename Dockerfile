@@ -13,11 +13,11 @@ COPY . .
 
 RUN npm run build
 
-FROM nginx:1.23-alpine
+FROM nginx:1.25-alpine-slim
 WORKDIR /app
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx /etc/nginx/
 
-EXPOSE 443
+EXPOSE 443 80
 ENV PORT 443

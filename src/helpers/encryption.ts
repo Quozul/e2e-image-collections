@@ -79,7 +79,7 @@ async function decrypt(key: CryptoKey, data: BufferSource, iv: Uint8Array): Prom
 }
 
 async function decryptString(cryptoKey: CryptoKey, iv: string, payload: string): Promise<string> {
-  const decryptedBase64Name = await decrypt(cryptoKey, decodeBase64UrlToArrayBuffer(payload), extractBytesFromString(iv));
+  const decryptedBase64Name = await decrypt(cryptoKey, decodeBase64UrlToArrayBuffer(payload), extractBytesFromString(atob(iv)));
 
   const decoder = new TextDecoder();
   return decoder.decode(decryptedBase64Name);
@@ -89,7 +89,7 @@ async function fetchAndDecrypt(cryptoKey: CryptoKey, iv: string, collectionName:
   const response = await fetch(`${import.meta.env.VITE_API_URL}/collection/${collectionName}/image/${imageName}`);
   const buffer = await response.arrayBuffer();
 
-  return await decrypt(cryptoKey, buffer, extractBytesFromString(iv));
+  return await decrypt(cryptoKey, buffer, extractBytesFromString(atob(iv)));
 }
 
 export async function fetchAndDecryptFile(cryptoKey: CryptoKey, iv: string, collectionName: string, imageName: string): Promise<File> {

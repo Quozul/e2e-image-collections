@@ -63,10 +63,14 @@ export default function CryptoContextProvider({ children }: PropsWithChildren<{}
     }
 
     const index = collection.files.indexOf(imageName);
-    const [file, description] = await Promise.all([
-      fetchAndDecryptFile(key, collection.iv, collection.name, imageName),
-      fetchAndDecryptString(key, collection.iv, collection.name, `.${imageName}`),
-    ]);
+    const file = await fetchAndDecryptFile(key, collection.iv, collection.name, imageName);
+
+    const descriptionFileName = `.${imageName}`;
+    let description = "";
+
+    if (collection.files.includes(descriptionFileName)) {
+      description = await fetchAndDecryptString(key, collection.iv, collection.name, descriptionFileName);
+    }
 
     if (file === null) {
       throw Error("Error while fetching the image.");
