@@ -5,17 +5,20 @@ import { CollectionItem, uploadFileWithProgress } from "~/helpers/api";
 import { CryptoContext } from "~/components/CryptoContext";
 import "./upload.css";
 import { classNames } from "~/helpers/classNames";
+import useCollection from "~/components/collection/useCollection";
 
 type Props = {
   collection: CollectionItem;
 };
 
 export default function Upload({ collection }: Props) {
-  const { key, getCollection } = useContext(CryptoContext);
+  const { key } = useContext(CryptoContext);
+  const { refresh } = useCollection(collection.name);
   const [files, setFiles] = useState<File[]>([]);
   const [total, setTotal] = useState(0);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const isFileSystemApiSupported = "showDirectoryPicker" in window;
 
@@ -55,7 +58,9 @@ export default function Upload({ collection }: Props) {
     if (files.length > 0) {
       uploadFiles().then(() => {
         setFiles([]);
-        getCollection(collection.name, true);
+        if (!isUploading) {
+          refresh();
+        }
       });
     }
   }, [files]);
@@ -72,7 +77,7 @@ export default function Upload({ collection }: Props) {
           className="none"
           type="file"
           multiple
-          disabled={files.length > 0}
+          disabled={files.length > 0 || key === null}
           onChange={({ currentTarget }) => {
             setFiles(Array.from(currentTarget.files ?? []));
             currentTarget.value = "";
@@ -90,16 +95,27 @@ export default function Upload({ collection }: Props) {
         <label className="flex-col cursor-pointer">
           <button
             onClick={async () => {
-              // TODO:
-              //const dirHandle = await window.showDirectoryPicker();
-              //const entries = dirHandle.entries();
-              /*for await (const [name, handle] of entries) {
-                console.log(name, handle);
-              }*/
+              const dirHandle = await window.showDirectoryPicker();
+              const entries = dirHandle.entries();
+
+              let prepareUpload = [];
+              setIsUploading(true);
+
+              for await (const [, handle] of entries) {
+                prepareUpload.push(await handle.getFile());
+
+                if (prepareUpload.length >= 24) {
+                  setFiles(prepareUpload);
+                  prepareUpload = [];
+                }
+              }
+
+              setIsUploading(false);
+              refresh();
             }}
-            disabled={true}
+            disabled={files.length > 0 || key === null}
           >
-            Upload directory (wip)
+            Upload directory
           </button>
 
           {error !== null && <span className="text-danger">{error}</span>}

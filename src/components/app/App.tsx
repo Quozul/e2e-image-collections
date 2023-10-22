@@ -9,7 +9,7 @@ const COLLECTION_RE = /^[a-z0-9-_.~]{1,32}$/;
 
 function App() {
   const navigate = useNavigate();
-  const { setKey, getCollection } = useContext(CryptoContext);
+  const { setKey } = useContext(CryptoContext);
 
   const [password, setPassword] = useState<string>("");
   const [errorOpeningCollection, setErrorOpeningCollection] = useState<boolean>(false);
@@ -32,7 +32,6 @@ function App() {
           if (event.currentTarget.checkValidity()) {
             getKey(password).then(setKey);
             try {
-              await getCollection(collection);
               setPassword("");
               navigate(`/collection/${collection}`);
             } catch (e) {

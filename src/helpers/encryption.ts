@@ -14,7 +14,7 @@ export function extractBytesFromString(str: string): Uint8Array {
   return encoder.encode(str);
 }
 
-function decodeBase64UrlToArrayBuffer(str: string): ArrayBuffer {
+export function decodeBase64UrlToArrayBuffer(str: string): ArrayBuffer {
   str = str.replace(/-/g, "+").replace(/_/g, "/");
   while (str.length % 4) {
     str += "=";
@@ -74,12 +74,12 @@ export async function encryptFile(key: CryptoKey, iv: Uint8Array, file: File) {
 
 // Decryption
 
-async function decrypt(key: CryptoKey, data: BufferSource, iv: Uint8Array): Promise<ArrayBuffer> {
+export async function decrypt(key: CryptoKey, data: BufferSource, iv: Uint8Array): Promise<ArrayBuffer> {
   return await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
 }
 
-async function decryptString(cryptoKey: CryptoKey, iv: string, payload: string): Promise<string> {
-  const decryptedBase64Name = await decrypt(cryptoKey, decodeBase64UrlToArrayBuffer(payload), extractBytesFromString(atob(iv)));
+export async function decryptString(cryptoKey: CryptoKey, iv: Uint8Array, payload: ArrayBuffer): Promise<string> {
+  const decryptedBase64Name = await decrypt(cryptoKey, payload, iv);
 
   const decoder = new TextDecoder();
   return decoder.decode(decryptedBase64Name);
@@ -95,7 +95,7 @@ async function fetchAndDecrypt(cryptoKey: CryptoKey, iv: string, collectionName:
 export async function fetchAndDecryptFile(cryptoKey: CryptoKey, iv: string, collectionName: string, imageName: string): Promise<File> {
   const decrypted = await fetchAndDecrypt(cryptoKey, iv, collectionName, imageName);
 
-  const name = await decryptString(cryptoKey, iv, imageName);
+  const name = await decryptString(cryptoKey, extractBytesFromString(atob(iv)), decodeBase64UrlToArrayBuffer(imageName));
   const type = safeMime(name) ?? "";
 
   return new File([decrypted], name, { type });

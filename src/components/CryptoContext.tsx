@@ -1,10 +1,12 @@
 import { createContext, Dispatch, PropsWithChildren, SetStateAction, useState } from "react";
 import { CollectionItem, getOrCreateCollection } from "~/helpers/api";
-import { fetchAndDecryptFile, fetchAndDecryptString } from "~/helpers/encryption";
+import { extractBytesFromString, fetchAndDecryptFile, fetchAndDecryptString } from "~/helpers/encryption";
 
 type ContextType = {
   key: CryptoKey | null;
+  iv: Uint8Array | null;
   setKey: Dispatch<SetStateAction<CryptoKey | null>>;
+  setIv: Dispatch<SetStateAction<Uint8Array | null>>;
   collection: CollectionItem | null;
   getImage: (collection: string, image: string, refresh?: boolean) => Promise<ImageInformation>;
   getCollection: (collection: string, refresh?: boolean) => Promise<CollectionItem>;
@@ -13,7 +15,9 @@ type ContextType = {
 
 export const CryptoContext = createContext<ContextType>({
   key: null,
+  iv: null,
   setKey: () => void 0,
+  setIv: () => void 0,
   collection: null,
   getImage: () => new Promise(() => void 0),
   getCollection: () => new Promise(() => void 0),
@@ -32,6 +36,7 @@ export type ImageInformation = {
 };
 
 export default function CryptoContextProvider({ children }: PropsWithChildren<{}>) {
+  const [iv, setIv] = useState<Uint8Array | null>(null);
   const [key, setKey] = useState<CryptoKey | null>(null);
   const [collection, setCollection] = useState<CollectionItem | null>(null);
   const [imageCache, setImageCache] = useState<Record<string, ImageInformation>>({});
@@ -42,6 +47,7 @@ export default function CryptoContextProvider({ children }: PropsWithChildren<{}
 
       setCollection(collectionItem);
       setImageCache({});
+      setIv(extractBytesFromString(atob(collectionItem.iv)));
 
       return collectionItem;
     }
@@ -102,6 +108,8 @@ export default function CryptoContextProvider({ children }: PropsWithChildren<{}
       value={{
         key,
         setKey,
+        iv,
+        setIv,
         collection,
         getCollection,
         getImage,

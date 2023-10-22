@@ -17,11 +17,12 @@ export default function ImagePage() {
     setNewDescription,
     previousImageUrl,
     nextImageUrl,
+    url,
   } = useImage(String(collectionName), String(imageName));
 
   function enlargeImage() {
     if (image !== null) {
-      window.open(image.url, "_blank");
+      window.open(url, "_blank");
     }
   }
 
@@ -64,7 +65,7 @@ export default function ImagePage() {
             {image?.type?.startsWith("image/") ? (
               <img
                 className="h-100 object-fit-contain overflow-hidden rounded-1 cursor-zoom-in"
-                src={image.url}
+                src={url}
                 alt={image.name}
                 onLoad={onImageLoad}
                 onClick={enlargeImage}

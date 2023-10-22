@@ -9,6 +9,9 @@ import CollectionPage from "~/components/collection/CollectionPage";
 import CryptoContextProvider from "~/components/CryptoContext";
 import ImagePage from "~/components/image/ImagePage";
 import App from "~/components/app/App";
+import NewImagePage from "~/components/image/NewImagePage";
+import CacheProvider from "~/components/CacheContext";
+import CollectionProvider from "~/components/CollectionContext";
 
 const router = createBrowserRouter([
   {
@@ -20,15 +23,23 @@ const router = createBrowserRouter([
     element: <CollectionPage />,
   },
   {
-    path: "/collection/:collection/image/:image",
+    path: "/collection/:collection/oldimage/:image",
     element: <ImagePage />,
+  },
+  {
+    path: "/collection/:collection/image/:image",
+    element: <NewImagePage />,
   },
 ]);
 
 createRoot(document.getElementById("root") as HTMLElement).render(
   <StrictMode>
     <CryptoContextProvider>
-      <RouterProvider router={router} />
+      <CacheProvider>
+        <CollectionProvider>
+          <RouterProvider router={router} />
+        </CollectionProvider>
+      </CacheProvider>
     </CryptoContextProvider>
   </StrictMode>,
 );
