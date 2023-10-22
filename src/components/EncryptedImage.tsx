@@ -1,35 +1,23 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { deleteFile } from "~/helpers/api";
+import { CollectionItem } from "~/helpers/api";
 import useOnScreen from "~/hooks/useOnScreen";
-import { ImageInformation } from "~/components/CryptoContext";
 import { classNames } from "~/helpers/classNames";
 import ImageViewer from "~/components/image/ImageViewer";
-import useCollection from "~/components/collection/useCollection";
+import useImage from "~/components/image/useImage";
 
 type Props = {
-  collectionName: string;
   imageName: string;
   cover: boolean;
+  collection: CollectionItem;
 };
 
-function EncryptedImage({ collectionName, imageName, cover }: Props) {
+export default function EncryptedImage({ collection, imageName, cover }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const isVisible = useOnScreen(ref);
-  const [wasVisible, setWasVisible] = useState(isVisible);
   const navigate = useNavigate();
-  const { collection, refresh } = useCollection(collectionName);
-  const [image, setImage] = useState<ImageInformation | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  const name = image?.name ?? imageName;
-
-  useEffect(() => {
-    if (isVisible) {
-      setWasVisible(isVisible);
-    }
-  }, [isVisible]);
+  const image = useImage(collection, imageName!, isVisible);
 
   const imageClasses = classNames({
     "rounded-1 grow-1 aspect-ratio-square justify-center flex-col align-center": true,
@@ -41,39 +29,27 @@ function EncryptedImage({ collectionName, imageName, cover }: Props) {
     <div className="flex-col p-1 bg-background-muted rounded-1 overflow-hidden" ref={ref}>
       {collection && (
         <ImageViewer
-          collectionName={collectionName}
+          file={image.file}
           className={imageClasses}
-          imageName={imageName}
-          collectionFiles={collection.files}
           onClick={() => {
-            navigate(`/collection/${collectionName}/image/${imageName}`);
+            navigate(`/collection/${collection.name}/image/${imageName}`);
           }}
         />
       )}
 
       <div className="flex justify-space-between align-center">
-        <span className="text-ellipsis" title={name}>
-          {name}
+        <span className="text-ellipsis" title={image.fileName}>
+          {image.fileName}
         </span>
 
         <button
-          onClick={async () => {
-            setIsDeleting(true);
-            try {
-              await deleteFile(collectionName, imageName);
-              refresh();
-            } finally {
-              setIsDeleting(false);
-            }
+          onClick={() => {
+            navigate(`/collection/${collection.name}/image/${imageName}`);
           }}
-          className="danger"
-          disabled={isDeleting}
         >
-          Delete
+          View
         </button>
       </div>
     </div>
   );
 }
-
-export default EncryptedImage;

@@ -22,7 +22,7 @@ RUN cargo build --release
 # our final base
 FROM rust:1.64-slim-buster
 
-# copy the build artifact from the build stage
+WORKDIR /app
 COPY --from=build /rustful-webftp/target/release/rustful-webftp .
 
 EXPOSE 8000

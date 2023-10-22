@@ -1,12 +1,10 @@
 import { PropsWithChildren, SyntheticEvent, useEffect, useState } from "react";
-import { useFile } from "~/components/image/useImage";
+import { UseFile } from "~/components/image/useImage";
 import Password from "~/components/password/Password";
 import { classNames } from "~/helpers/classNames";
 
 type Props = {
-  collectionFiles: string[];
-  collectionName: string;
-  imageName: string;
+  file: UseFile;
   className: string;
   onClick?: () => void;
   onLoad?: (event: SyntheticEvent<HTMLImageElement>) => void;
@@ -23,31 +21,14 @@ function Status({ className, icon, children }: PropsWithChildren<{ className: st
   );
 }
 
-export default function ImageViewer({ collectionFiles, collectionName, imageName, className, onClick, onLoad }: Props) {
-  const file = useFile(collectionFiles, collectionName, imageName!);
+export default function ImageViewer({ file, className, onClick, onLoad }: Props) {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     setIsLoading(true);
   }, [file.url]);
 
-  if (file.isFetching) {
-    return (
-      <Status className={className} icon="hourglass">
-        The file is downloading
-      </Status>
-    );
-  }
-
-  if (file.isDecrypting) {
-    return (
-      <Status className={className} icon="key-fill">
-        The file is decrypting
-      </Status>
-    );
-  }
-
-  if (file.isEncrypted) {
+  if (file.isEncrypted && !file.isDecrypting) {
     return (
       <Status className={className} icon="shield-lock">
         The file is encrypted
@@ -56,15 +37,7 @@ export default function ImageViewer({ collectionFiles, collectionName, imageName
     );
   }
 
-  if (!file.isReady) {
-    return (
-      <Status className={className} icon="bug-fill">
-        The file cannot be displayed
-      </Status>
-    );
-  }
-
-  if (file.file === null || file.url === null) {
+  if (!file.isReady || file.file === null || file.url === null) {
     return (
       <Status className={className} icon="hourglass">
         The file is loading
@@ -95,6 +68,27 @@ export default function ImageViewer({ collectionFiles, collectionName, imageName
           onLoad={(event) => {
             setIsLoading(false);
             onLoad?.(event);
+          }}
+        />
+      </>
+    );
+  }
+
+  if (file.file.type.startsWith("video/")) {
+    return (
+      <>
+        {isLoading && (
+          <Status className={className} icon="hourglass">
+            The file is loading
+          </Status>
+        )}
+
+        <video
+          className={imageClasses}
+          src={file.url}
+          controls
+          onLoadedData={() => {
+            setIsLoading(false);
           }}
         />
       </>

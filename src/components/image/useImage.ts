@@ -36,28 +36,40 @@ async function fetchAll(
   return { file, description };
 }
 
-export function useFile(collectionFiles: string[], collectionName: string, imageName: string) {
+export type UseFile = {
+  file: File | null;
+  isReady: boolean;
+  isEncrypted: boolean;
+  description: string | null;
+  isFetching: boolean;
+  hasDescription: boolean;
+  refresh: () => void;
+  url: string | null;
+  isDecrypting: boolean;
+};
+
+export function useFile(collectionFiles: string[], collectionName: string, imageName: string, load = true): UseFile {
   const { key, iv } = useContext(CryptoContext);
   const { cache, setCache } = useContext(CacheContext);
 
+  const [isLoaded, setIsLoaded] = useState(false);
+
   const cacheKey = `${collectionName}:${imageName}`;
-  const defaultValue = cache[cacheKey] ?? {
-    encryptedFileBuffer: null,
-    encryptedDescriptionBuffer: null,
-    decryptedFileBuffer: null,
-    decryptedDescriptionBuffer: null,
-    url: null,
-  };
+  const defaultValue =
+    cacheKey in cache && isLoaded
+      ? cache[cacheKey]
+      : {
+          encryptedFileBuffer: null,
+          encryptedDescriptionBuffer: null,
+          decryptedFileBuffer: null,
+          decryptedDescriptionBuffer: null,
+          url: null,
+        };
+
+  const { encryptedFileBuffer, encryptedDescriptionBuffer, decryptedFileBuffer, decryptedDescriptionBuffer, url } = defaultValue;
 
   const [isFetching, setIsFetching] = useState(false);
-  const [encryptedFileBuffer, setEncryptedFileBuffer] = useState<ArrayBuffer | null>(defaultValue.encryptedFileBuffer);
-  const [encryptedDescriptionBuffer, setEncryptedDescriptionBuffer] = useState<ArrayBuffer | null>(defaultValue.encryptedDescriptionBuffer);
-
   const [isDecrypting, setIsDecrypting] = useState(false);
-  const [decryptedFileBuffer, setDecryptedFileBuffer] = useState<File | null>(defaultValue.decryptedFileBuffer);
-  const [decryptedDescriptionBuffer, setDecryptedDescriptionBuffer] = useState<string | null>(defaultValue.decryptedDescriptionBuffer);
-
-  const [url, setUrl] = useState<string | null>(defaultValue.url);
 
   const isReady = !isFetching && !isDecrypting && decryptedFileBuffer !== null;
   const isEncrypted = !isReady && decryptedFileBuffer === null;
@@ -67,9 +79,6 @@ export function useFile(collectionFiles: string[], collectionName: string, image
     setIsFetching(true);
     fetchAll(collectionFiles, collectionName, imageName)
       .then(({ file, description }) => {
-        setEncryptedFileBuffer(file);
-        setEncryptedDescriptionBuffer(description);
-
         setCache(cacheKey, {
           ...defaultValue,
           encryptedFileBuffer: file,
@@ -77,9 +86,6 @@ export function useFile(collectionFiles: string[], collectionName: string, image
         });
       })
       .catch(() => {
-        setEncryptedFileBuffer(null);
-        setEncryptedDescriptionBuffer(null);
-
         setCache(cacheKey, {
           ...defaultValue,
           encryptedFileBuffer: null,
@@ -95,28 +101,22 @@ export function useFile(collectionFiles: string[], collectionName: string, image
     const cacheKey = `${collectionName}:${imageName}`;
 
     if (cacheKey in cache) {
-      console.log("Found in cache", cacheKey);
-      const { encryptedFileBuffer, encryptedDescriptionBuffer, decryptedFileBuffer, decryptedDescriptionBuffer, url } = cache[cacheKey];
+      const { encryptedFileBuffer } = cache[cacheKey];
 
       if (encryptedFileBuffer === null) {
-        console.log("Invalid in cache", cacheKey);
         refresh(collectionFiles, collectionName, imageName);
-      } else {
-        setEncryptedFileBuffer(encryptedFileBuffer);
-        setEncryptedDescriptionBuffer(encryptedDescriptionBuffer);
-        setDecryptedFileBuffer(decryptedFileBuffer);
-        setDecryptedDescriptionBuffer(decryptedDescriptionBuffer);
-        setUrl(url);
       }
     } else {
-      console.log("Not found in cache", cacheKey);
       refresh(collectionFiles, collectionName, imageName);
     }
   }
 
   useEffect(() => {
-    refreshWithCache(collectionFiles, collectionName, imageName);
-  }, [collectionFiles, collectionName, imageName]);
+    if (load && !isLoaded) {
+      refreshWithCache(collectionFiles, collectionName, imageName);
+      setIsLoaded(true);
+    }
+  }, [collectionFiles, collectionName, imageName, load]);
 
   useEffect(() => {
     if (key !== null && iv !== null && encryptedFileBuffer !== null && decryptedFileBuffer === null) {
@@ -128,10 +128,7 @@ export function useFile(collectionFiles: string[], collectionName: string, image
           const type = safeMime(name) ?? "";
           const file = new File([buffer], name, { type });
 
-          setDecryptedFileBuffer(file);
-
           const newUrl = URL.createObjectURL(file);
-          setUrl(newUrl);
 
           setCache(cacheKey, {
             ...defaultValue,
@@ -145,7 +142,15 @@ export function useFile(collectionFiles: string[], collectionName: string, image
           }
         })
         .catch(() => {
-          setDecryptedFileBuffer(null);
+          setCache(cacheKey, {
+            ...defaultValue,
+            url: null,
+            decryptedFileBuffer: null,
+          });
+
+          if (url !== null) {
+            URL.revokeObjectURL(url);
+          }
         })
         .finally(() => {
           setIsDecrypting(false);
@@ -157,15 +162,17 @@ export function useFile(collectionFiles: string[], collectionName: string, image
     if (key !== null && iv !== null && encryptedDescriptionBuffer !== null && decryptedDescriptionBuffer === null) {
       decryptString(key, iv, encryptedDescriptionBuffer)
         .then((description) => {
-          setDecryptedDescriptionBuffer(description);
-
           setCache(cacheKey, {
             ...defaultValue,
             decryptedDescriptionBuffer: description,
           });
         })
         .catch(() => {
-          setDecryptedDescriptionBuffer(null);
+          setCache(cacheKey, {
+            ...defaultValue,
+            url: null,
+            decryptedDescriptionBuffer: null,
+          });
         });
     }
   }, [key, iv, encryptedDescriptionBuffer]);
@@ -183,12 +190,12 @@ export function useFile(collectionFiles: string[], collectionName: string, image
   };
 }
 
-export function useNewImage(collection: CollectionItem, imageName: string) {
-  const file = useFile(collection.files, collection.name, imageName!);
+export default function useImage(collection: CollectionItem, imageName: string, load = true) {
+  const file = useFile(collection.files, collection.name, imageName!, load);
   const [dimensions, setDimensions] = useState("");
 
-  const indexInCollection = collection.files.indexOf(imageName);
   const visibleFiles = collection.files.filter((file) => !file.startsWith("."));
+  const indexInCollection = visibleFiles.indexOf(imageName);
   const previous = indexInCollection >= 0 ? visibleFiles[indexInCollection - 1] ?? null : null;
   const next = indexInCollection >= 0 ? visibleFiles[indexInCollection + 1] ?? null : null;
 
@@ -207,13 +214,13 @@ export function useNewImage(collection: CollectionItem, imageName: string) {
     dimensions,
     fileName: file.file?.name ?? imageName,
     indexInCollection,
-    previousImageUrl: indexInCollection === 0 ? null : `/collection/${collection.name}/image/${previous}`,
-    nextImageUrl: indexInCollection === collection.files.length - 1 ? null : `/collection/${collection.name}/image/${next}`,
+    previousImageUrl: indexInCollection <= 0 ? null : `/collection/${collection.name}/image/${previous}`,
+    nextImageUrl: indexInCollection >= visibleFiles.length - 1 ? null : `/collection/${collection.name}/image/${next}`,
     shouldDisplayDimensions: file.file?.type.startsWith("image/") ?? false,
   };
 }
 
-export default function useImage(collectionName: string, imageName: string) {
+function useDescription(collectionName: string, imageName: string) {
   const [isLoading, setIsLoading] = useState(false);
   const { key, collection, getImage } = useContext(CryptoContext);
   const [image, setImage] = useState<ImageInformation | null>(null);

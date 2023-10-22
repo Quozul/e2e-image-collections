@@ -7,9 +7,8 @@ import "./index.css";
 
 import CollectionPage from "~/components/collection/CollectionPage";
 import CryptoContextProvider from "~/components/CryptoContext";
-import ImagePage from "~/components/image/ImagePage";
 import App from "~/components/app/App";
-import NewImagePage from "~/components/image/NewImagePage";
+import ImagePage from "~/components/image/ImagePage";
 import CacheProvider from "~/components/CacheContext";
 import CollectionProvider from "~/components/CollectionContext";
 
@@ -23,12 +22,8 @@ const router = createBrowserRouter([
     element: <CollectionPage />,
   },
   {
-    path: "/collection/:collection/oldimage/:image",
-    element: <ImagePage />,
-  },
-  {
     path: "/collection/:collection/image/:image",
-    element: <NewImagePage />,
+    element: <ImagePage />,
   },
 ]);
 

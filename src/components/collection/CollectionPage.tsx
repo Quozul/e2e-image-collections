@@ -65,7 +65,7 @@ export default function CollectionPage() {
               {paginatedCollection.length > 0 ? (
                 <div className="grid cols-1 sm:cols-2 md:cols-3 lg:cols-4 xxl:cols-6 grow-1">
                   {paginatedCollection.map((name) => (
-                    <EncryptedImage cover={cover} key={name} collectionName={collection.name} imageName={name} />
+                    <EncryptedImage cover={cover} key={name} collection={collection} imageName={name} />
                   ))}
                 </div>
               ) : (

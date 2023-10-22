@@ -1447,7 +1447,7 @@ hr {
   -webkit-text-fill-color: transparent;
 }
 
-img {
+img, video {
   width: 100%;
   height: auto;
 }

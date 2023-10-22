@@ -1,17 +1,20 @@
-import { CollectionItem } from "~/helpers/api";
+import { CollectionItem, deleteFile } from "~/helpers/api";
 import ImageViewer from "~/components/image/ImageViewer";
-import { useNewImage } from "~/components/image/useImage";
 import { useNavigate } from "react-router-dom";
+import useImage from "~/components/image/useImage";
+import { useState } from "react";
 
 type Props = {
   collection: CollectionItem;
+  refreshCollection: () => void;
   imageName: string;
 };
 
-export default function FullImageViewer({ collection, imageName }: Props) {
+export default function FilePreview({ collection, refreshCollection, imageName }: Props) {
   const navigate = useNavigate();
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const image = useNewImage(collection, imageName);
+  const image = useImage(collection, imageName);
 
   return (
     <div className="flex-col overflow-hidden image-page p-2">
@@ -31,9 +34,7 @@ export default function FullImageViewer({ collection, imageName }: Props) {
 
       <div className="grid cols-1 lg:cols-2-1 overflow-hidden">
         <ImageViewer
-          collectionFiles={collection.files}
-          collectionName={collection.name}
-          imageName={imageName}
+          file={image.file}
           className="h-100 object-fit-contain overflow-hidden rounded-1 flex-col align-center"
           onClick={() => {
             if (image.file.url !== null) {
@@ -73,10 +74,12 @@ export default function FullImageViewer({ collection, imageName }: Props) {
             </div>
           )}
 
-          <div className="list-entry grid cols-2">
+          <div className="list-entry grid cols-3">
             <button
               onClick={() => {
-                navigate(image.previousImageUrl);
+                if (image.previousImageUrl !== null) {
+                  navigate(image.previousImageUrl);
+                }
               }}
               disabled={image.previousImageUrl === null}
             >
@@ -85,11 +88,29 @@ export default function FullImageViewer({ collection, imageName }: Props) {
 
             <button
               onClick={() => {
-                navigate(image.nextImageUrl);
+                if (image.nextImageUrl !== null) {
+                  navigate(image.nextImageUrl);
+                }
               }}
               disabled={image.nextImageUrl === null}
             >
               Next
+            </button>
+
+            <button
+              onClick={async () => {
+                setIsDeleting(true);
+                try {
+                  await deleteFile(collection.name, imageName);
+                  refreshCollection();
+                } finally {
+                  setIsDeleting(false);
+                }
+              }}
+              className="danger"
+              disabled={isDeleting}
+            >
+              Delete
             </button>
           </div>
         </div>

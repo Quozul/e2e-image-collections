@@ -95,6 +95,7 @@ export default function Upload({ collection }: Props) {
         <label className="flex-col cursor-pointer">
           <button
             onClick={async () => {
+              // @ts-ignore
               const dirHandle = await window.showDirectoryPicker();
               const entries = dirHandle.entries();
 
