@@ -21,7 +21,7 @@ export async function getOrCreateCollection(collection: string): Promise<Collect
   return await response.json();
 }
 
-export async function uploadFileWithProgress(collection: string, files: File[]) {
+export async function uploadFilesWithProgress(collection: string, files: File[]) {
   const url = `${import.meta.env.VITE_API_URL}/collection/${collection}`;
 
   const formData = new FormData();
@@ -36,7 +36,7 @@ export async function uploadFileWithProgress(collection: string, files: File[]) 
   });
 }
 
-export async function uploadFile(collection: string, files: File[]) {
+export async function uploadFiles(collection: string, files: File[]) {
   const url = `${import.meta.env.VITE_API_URL}/collection/${collection}`;
 
   const formData = new FormData();

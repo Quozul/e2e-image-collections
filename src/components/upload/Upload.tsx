@@ -1,18 +1,20 @@
 import { useContext, useEffect, useState } from "react";
 
 import { encryptFile, extractBytesFromString } from "~/helpers/encryption";
-import { CollectionItem, uploadFileWithProgress } from "~/helpers/api";
-import { CryptoContext } from "~/components/CryptoContext";
+import { CollectionItem, uploadFilesWithProgress } from "~/helpers/api";
+import { CryptoContext } from "~/contexts/CryptoContext";
 import "./upload.css";
 import { classNames } from "~/helpers/classNames";
 import useCollection from "~/components/collection/useCollection";
+import { WorkerContext } from "~/contexts/WorkerContext";
+import Password from "~/components/password/Password";
 
 type Props = {
   collection: CollectionItem;
 };
 
 export default function Upload({ collection }: Props) {
-  const { key } = useContext(CryptoContext);
+  const { key, iv } = useContext(CryptoContext);
   const { refresh } = useCollection(collection.name);
   const [files, setFiles] = useState<File[]>([]);
   const [total, setTotal] = useState(0);
@@ -21,6 +23,7 @@ export default function Upload({ collection }: Props) {
   const [isUploading, setIsUploading] = useState(false);
 
   const isFileSystemApiSupported = "showDirectoryPicker" in window;
+  const { uploadWorker } = useContext(WorkerContext);
 
   async function uploadFiles() {
     if (key === null) return;
@@ -36,7 +39,7 @@ export default function Upload({ collection }: Props) {
 
       const encryptedFiles = await Promise.all(files.map(async (file) => await encryptFile(key, iv, file)));
 
-      const upload = await uploadFileWithProgress(collection.name, encryptedFiles);
+      const upload = await uploadFilesWithProgress(collection.name, encryptedFiles);
 
       for await (const event of upload) {
         setProgress(event.loaded);
@@ -54,21 +57,31 @@ export default function Upload({ collection }: Props) {
     }
   }
 
+  function messageHandler(message: MessageEvent<any>) {
+    refresh();
+  }
+
   useEffect(() => {
-    if (files.length > 0) {
-      uploadFiles().then(() => {
-        setFiles([]);
-        if (!isUploading) {
-          refresh();
-        }
-      });
-    }
-  }, [files]);
+    uploadWorker.addEventListener("message", messageHandler);
+
+    return () => {
+      uploadWorker.removeEventListener("message", messageHandler);
+    };
+  }, []);
 
   const classes = classNames({
     "grid cols-2 position-relative grow-1": isFileSystemApiSupported,
     "position-relative grow-1": !isFileSystemApiSupported,
   });
+
+  if (key === null) {
+    return (
+      <div className="grow-1 flex-col">
+        <Password className="grow-1 flex" />
+        <span className="text-danger">A password is required to upload files.</span>
+      </div>
+    );
+  }
 
   return (
     <div className={classes}>
@@ -77,14 +90,14 @@ export default function Upload({ collection }: Props) {
           className="none"
           type="file"
           multiple
-          disabled={files.length > 0 || key === null}
+          disabled={files.length > 0}
           onChange={({ currentTarget }) => {
-            setFiles(Array.from(currentTarget.files ?? []));
+            uploadWorker.postMessage({ files: currentTarget.files, key, iv, collection: collection.name });
             currentTarget.value = "";
           }}
         />
 
-        <div className="btn" aria-disabled={files.length > 0 || key === null}>
+        <div className="btn" aria-disabled={files.length > 0}>
           Upload files
         </div>
 
@@ -95,26 +108,10 @@ export default function Upload({ collection }: Props) {
         <label className="flex-col cursor-pointer">
           <button
             onClick={async () => {
-              // @ts-ignore
               const dirHandle = await window.showDirectoryPicker();
-              const entries = dirHandle.entries();
-
-              let prepareUpload = [];
-              setIsUploading(true);
-
-              for await (const [, handle] of entries) {
-                prepareUpload.push(await handle.getFile());
-
-                if (prepareUpload.length >= 24) {
-                  setFiles(prepareUpload);
-                  prepareUpload = [];
-                }
-              }
-
-              setIsUploading(false);
-              refresh();
+              uploadWorker.postMessage({ files: dirHandle, key, iv, collection: collection.name });
             }}
-            disabled={files.length > 0 || key === null}
+            disabled={files.length > 0}
           >
             Upload directory
           </button>

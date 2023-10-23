@@ -6,11 +6,9 @@ import "./style.css";
 import "./index.css";
 
 import CollectionPage from "~/components/collection/CollectionPage";
-import CryptoContextProvider from "~/components/CryptoContext";
 import App from "~/components/app/App";
 import ImagePage from "~/components/image/ImagePage";
-import CacheProvider from "~/components/CacheContext";
-import CollectionProvider from "~/components/CollectionContext";
+import ContextProvider from "~/contexts";
 
 const router = createBrowserRouter([
   {
@@ -29,12 +27,8 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById("root") as HTMLElement).render(
   <StrictMode>
-    <CryptoContextProvider>
-      <CacheProvider>
-        <CollectionProvider>
-          <RouterProvider router={router} />
-        </CollectionProvider>
-      </CacheProvider>
-    </CryptoContextProvider>
+    <ContextProvider>
+      <RouterProvider router={router} />
+    </ContextProvider>
   </StrictMode>,
 );

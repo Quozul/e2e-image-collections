@@ -1,8 +1,8 @@
 import { useSearchParams } from "react-router-dom";
 import { useContext, useEffect, useState } from "react";
 
-import { CryptoContext } from "~/components/CryptoContext";
-import { CollectionContext } from "~/components/CollectionContext";
+import { CryptoContext } from "~/contexts/CryptoContext";
+import { CollectionContext } from "~/contexts/CollectionContext";
 import { getOrCreateCollection } from "~/helpers/api";
 import { extractBytesFromString } from "~/helpers/encryption";
 

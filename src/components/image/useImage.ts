@@ -1,9 +1,9 @@
 import { SyntheticEvent, useContext, useEffect, useState } from "react";
-import { CryptoContext, ImageInformation } from "~/components/CryptoContext";
-import { decodeBase64UrlToArrayBuffer, decrypt, decryptString, encryptString, extractBytesFromString } from "~/helpers/encryption";
-import { CollectionItem, uploadFile } from "~/helpers/api";
+import { CryptoContext } from "~/contexts/CryptoContext";
+import { decodeBase64UrlToArrayBuffer, decrypt, decryptString } from "~/helpers/encryption";
+import { CollectionItem } from "~/helpers/api";
 import safeMime from "~/helpers/safeMime";
-import { CacheContext } from "~/components/CacheContext";
+import { CacheContext } from "~/contexts/CacheContext";
 
 async function fetchFile(collectionName: string, imageName: string) {
   const response = await fetch(`${import.meta.env.VITE_API_URL}/collection/${collectionName}/image/${imageName}`);
@@ -220,9 +220,9 @@ export default function useImage(collection: CollectionItem, imageName: string, 
   };
 }
 
-function useDescription(collectionName: string, imageName: string) {
+/*function useDescription(collectionName: string, imageName: string) {
   const [isLoading, setIsLoading] = useState(false);
-  const { key, collection, getImage } = useContext(CryptoContext);
+  const { key, collection } = useContext(CryptoContext);
   const [image, setImage] = useState<ImageInformation | null>(null);
   const [newDescription, setNewDescription] = useState<string>("");
   const [dimensions, setDimensions] = useState("");
@@ -270,4 +270,4 @@ function useDescription(collectionName: string, imageName: string) {
     previousImageUrl: image === null ? "#" : `/collection/${collectionName}/image/${image.previous}`,
     nextImageUrl: image === null ? "#" : `/collection/${collectionName}/image/${image.next}`,
   };
-}
+}*/

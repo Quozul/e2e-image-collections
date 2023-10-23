@@ -1,6 +1,6 @@
 import { HTMLProps, useContext, useState } from "react";
 import { getKey } from "~/helpers/encryption";
-import { CryptoContext } from "~/components/CryptoContext";
+import { CryptoContext } from "~/contexts/CryptoContext";
 
 export default function Password(props: HTMLProps<HTMLInputElement>) {
   const { setKey } = useContext(CryptoContext);
@@ -8,7 +8,7 @@ export default function Password(props: HTMLProps<HTMLInputElement>) {
 
   return (
     <form
-      className="form row"
+      className={props.className}
       onSubmit={async (event) => {
         event.preventDefault();
         getKey(password).then(setKey);
