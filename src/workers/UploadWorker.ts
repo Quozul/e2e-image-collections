@@ -101,23 +101,25 @@ addEventListener("message", async ({ data }: MessageEvent<Message>) => {
     const cacheKey = `${collectionName}/${imageName}`;
 
     if (!(cacheKey in cache)) {
+      // TODO: Catch errors
       const encryptedFile = await fetchFile(collectionName, imageName);
       const file = await decryptFile(key, encryptedFile, iv, imageName);
+
       cache[cacheKey] = {
         url: URL.createObjectURL(file),
         fileName: file.name,
         fileType: file.type,
         fileSize: file.size,
       };
+
+      const message: StatusMessage = {
+        type: "ImageDownloaded",
+        collectionName,
+        imageName,
+        file: cache[cacheKey],
+      };
+
+      postMessage(message);
     }
-
-    const message: StatusMessage = {
-      type: "ImageDownloaded",
-      collectionName,
-      imageName,
-      file: cache[cacheKey],
-    };
-
-    return postMessage(message);
   }
 });

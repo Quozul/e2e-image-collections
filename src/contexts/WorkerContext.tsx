@@ -1,13 +1,12 @@
 import { createContext, PropsWithChildren, useMemo } from "react";
 import DownloadWorker from "~/workers/UploadWorker?worker";
-import HelloWorker from "~/workers/HelloWorld?worker";
 
 type Context = {
   uploadWorker: Worker;
 };
 
 const defaultValue: Context = {
-  uploadWorker: new HelloWorker(),
+  uploadWorker: null!,
 };
 
 export const WorkerContext = createContext<Context>(defaultValue);

@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { getKey } from "~/helpers/encryption";
 import { CryptoContext } from "~/contexts/CryptoContext";
 import { classNames } from "~/helpers/classNames";
-import WorkerTest from "~/components/WorkerTest";
 
 const COLLECTION_RE = /^[a-z0-9-_.~]{1,32}$/;
 
@@ -86,8 +85,6 @@ function App() {
           {errorOpeningCollection && <div className="invalid">An error has occurred while opening the collection.</div>}
         </div>
       </form>
-
-      <WorkerTest />
     </div>
   );
 }
