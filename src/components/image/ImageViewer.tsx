@@ -1,10 +1,11 @@
-import { PropsWithChildren, SyntheticEvent, useEffect, useState } from "react";
-import { UseFile } from "~/components/image/useImage";
-import Password from "~/components/password/Password";
+import { PropsWithChildren, SyntheticEvent, useContext, useEffect, useState } from "react";
 import { classNames } from "~/helpers/classNames";
+import { Image } from "~/workers/UploadWorker";
+import Password from "~/components/password/Password";
+import { CryptoContext } from "~/contexts/CryptoContext";
 
 type Props = {
-  file: UseFile;
+  file: Image | null;
   className: string;
   onClick?: () => void;
   onLoad?: (event: SyntheticEvent<HTMLImageElement>) => void;
@@ -23,22 +24,19 @@ function Status({ className, icon, children }: PropsWithChildren<{ className: st
 
 export default function ImageViewer({ file, className, onClick, onLoad }: Props) {
   const [isLoading, setIsLoading] = useState(false);
+  const { key } = useContext(CryptoContext);
 
   useEffect(() => {
     setIsLoading(true);
-  }, [file.url]);
+  }, [file?.url]);
 
-  if (file.isEncrypted && !file.isDecrypting) {
-    return (
+  if (file === null) {
+    return key === null ? (
       <Status className={className} icon="shield-lock">
         The file is encrypted
         <Password placeholder="Enter password to decrypt" />
       </Status>
-    );
-  }
-
-  if (!file.isReady || file.file === null || file.url === null) {
-    return (
+    ) : (
       <Status className={className} icon="hourglass">
         The file is loading
       </Status>
@@ -51,7 +49,7 @@ export default function ImageViewer({ file, className, onClick, onLoad }: Props)
     none: isLoading,
   });
 
-  if (file.file.type.startsWith("image/")) {
+  if (file.fileType.startsWith("image/")) {
     return (
       <>
         {isLoading && (
@@ -61,7 +59,7 @@ export default function ImageViewer({ file, className, onClick, onLoad }: Props)
         )}
 
         <img
-          alt={file.file.name}
+          alt={file.fileName}
           onClick={onClick}
           className={imageClasses}
           src={file.url}
@@ -74,7 +72,7 @@ export default function ImageViewer({ file, className, onClick, onLoad }: Props)
     );
   }
 
-  if (file.file.type.startsWith("video/")) {
+  if (file.fileType.startsWith("video/")) {
     return (
       <>
         {isLoading && (

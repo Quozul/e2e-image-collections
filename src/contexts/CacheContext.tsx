@@ -1,16 +1,9 @@
 import { createContext, PropsWithChildren, useState } from "react";
-
-type Image = {
-  encryptedFileBuffer: ArrayBuffer | null;
-  encryptedDescriptionBuffer: ArrayBuffer | null;
-  decryptedFileBuffer: File | null;
-  decryptedDescriptionBuffer: string | null;
-  url: string | null;
-};
+import { Image } from "~/workers/UploadWorker";
 
 type Context = {
   cache: Record<string, Image>;
-  setCache: (key: string, image: Image) => void;
+  setCache: (key: string, file: Image) => void;
 };
 
 const defaultValue: Context = {
@@ -27,10 +20,10 @@ export default function CacheProvider({ children }: PropsWithChildren<{}>) {
     <CacheContext.Provider
       value={{
         cache,
-        setCache: (key: string, image: Image) => {
+        setCache: (key: string, file: Image) => {
           setCache((prevState) => ({
             ...prevState,
-            [key]: image,
+            [key]: file,
           }));
         },
       }}

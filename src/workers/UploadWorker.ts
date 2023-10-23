@@ -1,5 +1,6 @@
-import { encryptFile } from "~/helpers/encryption";
+import { decodeBase64UrlToArrayBuffer, decrypt, decryptString, encryptFile } from "~/helpers/encryption";
 import { uploadFiles } from "~/helpers/api";
+import safeMime from "~/helpers/safeMime";
 
 function* chunked<T>(array: T[], chunkSize: number = 10) {
   for (let i = 0; i < array.length; i += chunkSize) {
@@ -25,30 +26,98 @@ async function processFiles(data: FileSystemDirectoryHandle | FileList, key: Cry
     }
   }
 
-  for (const chunk of chunked(files, 100)) {
+  for (const chunk of chunked(files, 10)) {
     const encryptedFiles: File[] = [];
 
     for (const file of chunk) {
-      await encryptFile(key, iv, file);
+      const encryptedFile = await encryptFile(key, iv, file);
+      encryptedFiles.push(encryptedFile);
     }
 
     await uploadFiles(collection, encryptedFiles);
   }
 
-  postMessage("done");
+  const message: StatusMessage = {
+    type: "UploadDone",
+  };
+
+  postMessage(message);
 }
 
-type Message = {
-  files: FileSystemDirectoryHandle | FileList;
+type UploadDone = {
+  type: "UploadDone";
+};
+
+type UploadProgress = {
+  type: "UploadProgress";
+  progress: number;
+  total: number;
+};
+
+type ImageDownloaded = {
+  type: "ImageDownloaded";
+  collectionName: string;
+  imageName: string;
+  file: Image;
+};
+
+export type StatusMessage = UploadDone | UploadProgress | ImageDownloaded;
+
+export type Message = {
+  files: FileSystemDirectoryHandle | FileList | { collectionName: string; imageName: string };
   key: CryptoKey;
   iv: Uint8Array;
   collection: string;
 };
+
+export type Image = {
+  url: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+};
+
+const cache: Record<string, Image> = {};
+
+async function fetchFile(collectionName: string, imageName: string) {
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/collection/${collectionName}/image/${imageName}`);
+  return await response.arrayBuffer();
+}
+
+async function decryptFile(key: CryptoKey, encryptedFileBuffer: ArrayBuffer, iv: Uint8Array, encryptedFileName: string) {
+  const buffer = await decrypt(key, encryptedFileBuffer, iv);
+  const decryptedFileName = await decryptString(key, iv, decodeBase64UrlToArrayBuffer(encryptedFileName));
+  const type = safeMime(decryptedFileName) ?? "";
+  return new File([buffer], decryptedFileName, { type });
+}
 
 addEventListener("message", async ({ data }: MessageEvent<Message>) => {
   const { files, key, iv, collection } = data;
 
   if (files instanceof FileList || files instanceof FileSystemDirectoryHandle) {
     await processFiles(files, key, iv, collection);
+  } else {
+    const { collectionName, imageName } = files;
+    const cacheKey = `${collectionName}/${imageName}`;
+
+    if (!(cacheKey in cache)) {
+      const encryptedFile = await fetchFile(collectionName, imageName);
+      const file = await decryptFile(key, encryptedFile, iv, imageName);
+      cache[cacheKey] = {
+        url: URL.createObjectURL(file),
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+      };
+    }
+
+    const message: StatusMessage = {
+      type: "ImageDownloaded",
+      collectionName,
+      imageName,
+      file: cache[cacheKey],
+    };
+
+    return postMessage(message);
   }
 });

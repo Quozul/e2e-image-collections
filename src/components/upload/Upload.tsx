@@ -1,13 +1,13 @@
 import { useContext, useEffect, useState } from "react";
-
-import { encryptFile, extractBytesFromString } from "~/helpers/encryption";
-import { CollectionItem, uploadFilesWithProgress } from "~/helpers/api";
+import { CollectionItem } from "~/helpers/api";
 import { CryptoContext } from "~/contexts/CryptoContext";
 import "./upload.css";
 import { classNames } from "~/helpers/classNames";
 import useCollection from "~/components/collection/useCollection";
 import { WorkerContext } from "~/contexts/WorkerContext";
 import Password from "~/components/password/Password";
+import { StatusMessage } from "~/workers/UploadWorker";
+import { CacheContext } from "~/contexts/CacheContext";
 
 type Props = {
   collection: CollectionItem;
@@ -20,45 +20,25 @@ export default function Upload({ collection }: Props) {
   const [total, setTotal] = useState(0);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
 
   const isFileSystemApiSupported = "showDirectoryPicker" in window;
   const { uploadWorker } = useContext(WorkerContext);
+  const { setCache } = useContext(CacheContext);
 
-  async function uploadFiles() {
-    if (key === null) return;
-
-    setError(null);
-
-    try {
-      const total = files.map((file) => file.size).reduce((previousValue, currentValue) => previousValue + currentValue, 0);
-      setTotal(total);
-      setProgress(0);
-
-      const iv = extractBytesFromString(atob(collection.iv));
-
-      const encryptedFiles = await Promise.all(files.map(async (file) => await encryptFile(key, iv, file)));
-
-      const upload = await uploadFilesWithProgress(collection.name, encryptedFiles);
-
-      for await (const event of upload) {
-        setProgress(event.loaded);
+  function messageHandler({ data }: MessageEvent<StatusMessage>) {
+    const { type } = data;
+    switch (type) {
+      case "ImageDownloaded": {
+        const { collectionName, imageName, file } = data;
+        const cacheKey = `${collectionName}/${imageName}`;
+        setCache(cacheKey, file);
+        break;
       }
-    } catch (e) {
-      console.error(e);
-
-      if (e instanceof ProgressEvent) {
-        setError("Upload failed. Please check network connectivity.");
-      } else if (e instanceof DOMException) {
-        setError("Upload failed. You likely selected too much files or the files are too large to upload.");
-      } else {
-        setError(String(e));
+      case "UploadDone": {
+        refresh();
+        break;
       }
     }
-  }
-
-  function messageHandler(message: MessageEvent<any>) {
-    refresh();
   }
 
   useEffect(() => {
@@ -108,6 +88,7 @@ export default function Upload({ collection }: Props) {
         <label className="flex-col cursor-pointer">
           <button
             onClick={async () => {
+              // @ts-ignore
               const dirHandle = await window.showDirectoryPicker();
               uploadWorker.postMessage({ files: dirHandle, key, iv, collection: collection.name });
             }}

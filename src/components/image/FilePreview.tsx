@@ -37,7 +37,7 @@ export default function FilePreview({ collection, refreshCollection, imageName }
           file={image.file}
           className="h-100 object-fit-contain overflow-hidden rounded-1 flex-col align-center"
           onClick={() => {
-            if (image.file.url !== null) {
+            if (image.file?.url) {
               window.open(image.file.url, "_blank");
             }
           }}
@@ -59,7 +59,7 @@ export default function FilePreview({ collection, refreshCollection, imageName }
 
           <div className="list-entry grid cols-2">
             <span>Type</span>
-            <span>{image.file.file?.type || "unknown"}</span>
+            <span>{image.file?.fileType || "unknown"}</span>
           </div>
 
           <div className="list-entry grid cols-2">
