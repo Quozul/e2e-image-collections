@@ -26,18 +26,25 @@ async function processFiles(data: FileSystemDirectoryHandle | FileList, key: Cry
     }
   }
 
-  for (const chunk of chunked(files, 10)) {
-    const encryptedFiles: File[] = [];
+  const totalSize = files.map(({ size }) => size).reduce((acc, cur) => acc + cur);
+  let loadedSize = 0;
 
-    for (const file of chunk) {
-      const encryptedFile = await encryptFile(key, iv, file);
-      encryptedFiles.push(encryptedFile);
-    }
+  for (const file of files) {
+    const encryptedFile = await encryptFile(key, iv, file);
+    await uploadFiles(collection, [encryptedFile]);
 
-    await uploadFiles(collection, encryptedFiles);
+    loadedSize += file.size;
+
+    const message: UploadProgress = {
+      type: "UploadProgress",
+      loadedSize,
+      totalSize,
+    };
+
+    postMessage(message);
   }
 
-  const message: StatusMessage = {
+  const message: UploadDone = {
     type: "UploadDone",
   };
 
@@ -50,8 +57,8 @@ type UploadDone = {
 
 type UploadProgress = {
   type: "UploadProgress";
-  progress: number;
-  total: number;
+  loadedSize: number;
+  totalSize: number;
 };
 
 type ImageDownloaded = {

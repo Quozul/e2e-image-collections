@@ -16,7 +16,6 @@ type Props = {
 export default function Upload({ collection }: Props) {
   const { key, iv } = useContext(CryptoContext);
   const { refresh } = useCollection(collection.name);
-  const [files, setFiles] = useState<File[]>([]);
   const [total, setTotal] = useState(0);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +35,12 @@ export default function Upload({ collection }: Props) {
       }
       case "UploadDone": {
         refresh();
+        break;
+      }
+      case "UploadProgress": {
+        const { totalSize, loadedSize } = data;
+        setTotal(totalSize);
+        setProgress(loadedSize);
         break;
       }
     }
@@ -70,16 +75,18 @@ export default function Upload({ collection }: Props) {
           className="none"
           type="file"
           multiple
-          disabled={files.length > 0}
           onChange={({ currentTarget }) => {
-            uploadWorker.postMessage({ files: currentTarget.files, key, iv, collection: collection.name });
+            uploadWorker.postMessage({
+              files: currentTarget.files,
+              collection: collection.name,
+              key,
+              iv,
+            });
             currentTarget.value = "";
           }}
         />
 
-        <div className="btn" aria-disabled={files.length > 0}>
-          Upload files
-        </div>
+        <div className="btn">Upload files</div>
 
         {error !== null && <span className="text-danger">{error}</span>}
       </label>
@@ -92,7 +99,6 @@ export default function Upload({ collection }: Props) {
               const dirHandle = await window.showDirectoryPicker();
               uploadWorker.postMessage({ files: dirHandle, key, iv, collection: collection.name });
             }}
-            disabled={files.length > 0}
           >
             Upload directory
           </button>
@@ -101,15 +107,9 @@ export default function Upload({ collection }: Props) {
         </label>
       )}
 
-      {files.length > 0 && (
-        <progress
-          className="progress-bar position-absolute top-0 bottom-0 left-0 right-0 w-100 h-100 rounded-1"
-          max={total}
-          value={progress}
-        >
-          {(progress / total) * 100}%
-        </progress>
-      )}
+      <progress className="progress-bar w-100 h-100 rounded-1" max={total} value={progress}>
+        {(progress / total) * 100}%
+      </progress>
     </div>
   );
 }

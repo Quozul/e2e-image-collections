@@ -1,6 +1,7 @@
 /.idea
 /node_modules
 /collections
+/api/collections
 *.pem
 /dist
 .env
