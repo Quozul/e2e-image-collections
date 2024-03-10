@@ -6,6 +6,7 @@ import "./style.css";
 import "./index.css";
 
 import ContextProvider from "~/contexts";
+import Layout from "~/components/Layout";
 
 const App = lazy(() => import("~/components/app/App"));
 const CollectionPage = lazy(() => import("~/components/collection/CollectionPage"));
@@ -23,6 +24,10 @@ const router = createBrowserRouter([
   {
     path: "/collection/:collection/image/:image",
     element: <ImagePage />,
+  },
+  {
+    path: "/layout",
+    element: <Layout />,
   },
 ]);
 
