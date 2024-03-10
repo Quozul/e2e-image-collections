@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es2017",
+    "target": "es2020",
     "lib": ["dom", "dom.iterable", "ESNext"],
     "module": "esnext",
     "strict": true,
@@ -9,6 +9,12 @@
     "moduleResolution": "node",
     "paths": {
       "~/*": ["./src/*"]
+    }
+  },
+  "ts-node": {
+    "esm": true,
+    "compilerOptions": {
+      "module": "ES2020"
     }
   }
 }

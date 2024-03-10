@@ -118,15 +118,15 @@ addEventListener("message", async ({ data }: MessageEvent<Message>) => {
         fileType: file.type,
         fileSize: file.size,
       };
-
-      const message: StatusMessage = {
-        type: "ImageDownloaded",
-        collectionName,
-        imageName,
-        file: cache[cacheKey],
-      };
-
-      postMessage(message);
     }
+
+    const message: StatusMessage = {
+      type: "ImageDownloaded",
+      collectionName,
+      imageName,
+      file: cache[cacheKey],
+    };
+
+    postMessage(message);
   }
 });

@@ -28,7 +28,7 @@ export default function Layout() {
             type="file"
             onInput={async ({ currentTarget }) => {
               const encrypted = await encryption(currentTarget.files!.item(0)!);
-              download("file.jpg", decrypted);
+              // download("file.jpg", decrypted);
             }}
           />
         </div>

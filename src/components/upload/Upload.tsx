@@ -107,7 +107,7 @@ export default function Upload({ collection }: Props) {
         </label>
       )}
 
-      <progress className="progress-bar w-100 h-100 rounded-1" max={total} value={progress}>
+      <progress className="progress-bar w-100 rounded-1" max={total} value={progress}>
         {(progress / total) * 100}%
       </progress>
     </div>

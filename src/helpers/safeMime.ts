@@ -1,4 +1,4 @@
-import { getType } from "mime";
+import mime from 'mime';
 
 export default function safeMime(fileName: string) {
   const extension = fileName.split(".").pop();
@@ -7,5 +7,5 @@ export default function safeMime(fileName: string) {
     return null;
   }
 
-  return getType(extension);
+  return mime.getType(extension);
 }

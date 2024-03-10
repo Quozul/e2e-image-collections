@@ -1,16 +1,19 @@
-use base64::engine::general_purpose;
-use base64::Engine;
 use std::path::{Component, PathBuf};
 use std::time::Duration;
 
+use base64::Engine;
+use base64::engine::general_purpose;
+use poem::{EndpointExt, listener::TcpListener, Route, Server};
 use poem::error::{BadRequest, InternalServerError, NotFound};
+use poem::http::HeaderValue;
 use poem::middleware::Cors;
-use poem::{listener::TcpListener, EndpointExt, Route, Server};
+use poem::web::headers::{ContentRange, Header};
+use poem_openapi::{ApiResponse, Multipart, Object, OpenApi, OpenApiService};
 use poem_openapi::param::{Path, Query};
 use poem_openapi::payload::{Binary, Json, PlainText};
 use poem_openapi::types::multipart::Upload;
-use poem_openapi::{ApiResponse, Multipart, Object, OpenApi, OpenApiService};
 use sha2::{Digest, Sha256};
+use tracing::{debug, error};
 
 struct Api;
 
@@ -46,6 +49,10 @@ enum UploadResponse {
     /// Returned when the path is invalid
     #[oai(status = 403)]
     Forbidden,
+
+    /// Returned when the request is mal formatted
+    #[oai(status = 400)]
+    BadRequest,
 }
 
 #[derive(ApiResponse)]
@@ -88,11 +95,7 @@ impl Api {
     ) -> GetResponse {
         let path = PathBuf::from("./collections/").join(collection.clone());
 
-        if path
-            .components()
-            .into_iter()
-            .any(|x| x == Component::ParentDir)
-        {
+        if path.components().any(|x| x == Component::ParentDir) {
             return GetResponse::Forbidden;
         }
 
@@ -108,13 +111,11 @@ impl Api {
                 .into_iter()
                 .filter_map(|entry| entry.ok())
                 .filter(|entry| {
-                    let is_hidden_file = entry.file_name().to_string_lossy().starts_with(".");
+                    let is_hidden_file = entry.file_name().to_string_lossy().starts_with('.');
 
                     match show_hidden_files {
                         None => !is_hidden_file,
-                        Some(show_hidden_files) => {
-                            is_hidden_file && show_hidden_files || !is_hidden_file
-                        }
+                        Some(show_hidden_files) => !is_hidden_file || show_hidden_files,
                     }
                 })
                 .map(|entry| entry.file_name().to_string_lossy().to_string())
@@ -130,6 +131,34 @@ impl Api {
         }))
     }
 
+    #[oai(path = "/collection/:collection/stream", method = "post")]
+    async fn stream_file(
+        &self,
+        Path(collection): Path<String>,
+        #[oai(name = "content-range")] content_range: poem_openapi::param::Header<String>,
+        Binary(upload): Binary<Vec<u8>>,
+    ) -> poem::Result<UploadResponse> {
+        match HeaderValue::try_from(content_range.as_str()) {
+            Ok(content_range_header_value) => {
+                let header_values = [content_range_header_value];
+                match ContentRange::decode(&mut header_values.iter()) {
+                    Ok(range) => {
+                        println!("'{}' '{:?}' '{}' bytes", collection, range, upload.len());
+                        Ok(UploadResponse::Created)
+                    }
+                    Err(err) => {
+                        error!("{err}");
+                        Ok(UploadResponse::BadRequest)
+                    }
+                }
+            }
+            Err(err) => {
+                error!("{err}");
+                Ok(UploadResponse::BadRequest)
+            }
+        }
+    }
+
     #[oai(path = "/collection/:collection", method = "post")]
     async fn create_file(
         &self,
@@ -138,11 +167,7 @@ impl Api {
     ) -> poem::Result<UploadResponse> {
         let path = PathBuf::from("./collections/").join(collection);
 
-        if path
-            .components()
-            .into_iter()
-            .any(|x| x == Component::ParentDir)
-        {
+        if path.components().any(|x| x == Component::ParentDir) {
             return Ok(UploadResponse::Forbidden);
         }
 
@@ -169,11 +194,7 @@ impl Api {
     ) -> poem::Result<FileResponse> {
         let path = PathBuf::from("./collections/").join(collection).join(image);
 
-        if path
-            .components()
-            .into_iter()
-            .any(|x| x == Component::ParentDir)
-        {
+        if path.components().any(|x| x == Component::ParentDir) {
             return Ok(FileResponse::Forbidden);
         }
 
@@ -190,11 +211,7 @@ impl Api {
     ) -> poem::Result<DeleteResponse> {
         let path = PathBuf::from("./collections/").join(collection).join(image);
 
-        if path
-            .components()
-            .into_iter()
-            .any(|x| x == Component::ParentDir)
-        {
+        if path.components().any(|x| x == Component::ParentDir) {
             return Ok(DeleteResponse::Forbidden);
         }
 
@@ -209,7 +226,7 @@ impl Api {
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
     if std::env::var_os("RUST_LOG").is_none() {
-        std::env::set_var("RUST_LOG", "poem=debug");
+        std::env::set_var("RUST_LOG", "poem=debug,api=debug");
     }
     tracing_subscriber::fmt::init();
 

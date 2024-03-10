@@ -2,6 +2,7 @@
 /node_modules
 /collections
 /api/collections
+/api/target
 *.pem
 /dist
 .env

@@ -1,5 +1,0 @@
-{
-  "tasks": {
-    "api": "deno run --allow-env --allow-net --allow-read --allow-write api/main.ts"
-  }
-}

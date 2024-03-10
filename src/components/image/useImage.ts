@@ -1,29 +1,49 @@
 import { SyntheticEvent, useContext, useEffect, useState } from "react";
 import { CryptoContext } from "~/contexts/CryptoContext";
 import { CollectionItem } from "~/helpers/api";
-import { CacheContext } from "~/contexts/CacheContext";
 import { WorkerContext } from "~/contexts/WorkerContext";
-import { Image, Message } from "~/workers/UploadWorker";
+import { Image, Message, StatusMessage } from "~/workers/UploadWorker";
 
-export function useFile(collectionName: string, imageName: string, load = true): Image | null {
+function useFile(collectionName: string, imageName: string, load = true): Image | null {
   const { key, iv } = useContext(CryptoContext);
-  const { cache } = useContext(CacheContext);
   const { uploadWorker } = useContext(WorkerContext);
 
   const [isLoaded, setIsLoaded] = useState(false);
   const [file, setFile] = useState<Image | null>(null);
 
-  const cacheKey = `${collectionName}/${imageName}`;
-
-  useEffect(() => {
-    if (cacheKey in cache && file === null) {
-      setFile(cache[cacheKey]);
-    } else if (key !== null && iv !== null && !isLoaded && load) {
-      setIsLoaded(true);
+  function loadImage() {
+    if (key !== null && iv !== null && !isLoaded && load) {
       const message: Message = { collection: collectionName, files: { imageName, collectionName }, iv, key };
       uploadWorker.postMessage(message);
     }
-  }, [cacheKey, key, iv, cache, load, isLoaded]);
+  }
+
+  useEffect(() => {
+    setIsLoaded(false);
+
+    const messageHandler = ({ data }: MessageEvent<StatusMessage>) => {
+      const { type } = data;
+      switch (type) {
+        case "ImageDownloaded": {
+          if (data.collectionName === collectionName && data.imageName === imageName) {
+            setFile(data.file);
+            setIsLoaded(true);
+          }
+          break;
+        }
+      }
+    };
+
+    uploadWorker.addEventListener("message", messageHandler);
+
+    return () => {
+      uploadWorker.removeEventListener("message", messageHandler);
+    };
+  }, [collectionName, imageName]);
+
+  useEffect(() => {
+    loadImage();
+  }, [key, iv, isLoaded, load]);
 
   return file;
 }

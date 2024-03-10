@@ -9,6 +9,12 @@ This was the opportunity to learn how to use the WebCrypto API.
 - Node
 - Npm
 
+## Environment
+
+```
+VITE_API_URL=http://localhost:8000/api
+```
+
 ## Getting started
 
 1. As the WebCrypto requires https, you have to generate a SSL certificate for the API.  
