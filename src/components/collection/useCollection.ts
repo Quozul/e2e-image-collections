@@ -11,7 +11,6 @@ export default function useCollection(collectionName: string) {
 
   const [pageSize, setPageSize] = useState(24);
   const [paginatedCollection, setPaginatedCollection] = useState<string[]>([]);
-  const [decryptedCollectionFileNames, setDecryptedCollectionFileNames] = useState<string[]>([]);
 
   const { setIv } = useContext(CryptoContext);
   const { collection, setCollection } = useContext(CollectionContext);
@@ -19,11 +18,10 @@ export default function useCollection(collectionName: string) {
   const currentPage = parseInt(searchParams.get("page") ?? "0");
   const totalPages = Math.ceil((collection?.files.length ?? 0) / pageSize) - 1;
 
-  function refresh(collectionName: string) {
-    getOrCreateCollection(collectionName).then((collectionItem) => {
-      setCollection(collectionItem);
-      setIv(extractBytesFromString(atob(collectionItem.iv)));
-    });
+  async function refresh(collectionName: string) {
+    const collectionItem = await getOrCreateCollection(collectionName);
+    setCollection(collectionItem);
+    setIv(extractBytesFromString(atob(collectionItem.iv)));
   }
 
   useEffect(() => {

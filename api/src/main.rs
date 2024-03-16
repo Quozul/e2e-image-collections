@@ -5,15 +5,12 @@ use base64::Engine;
 use base64::engine::general_purpose;
 use poem::{EndpointExt, listener::TcpListener, Route, Server};
 use poem::error::{BadRequest, InternalServerError, NotFound};
-use poem::http::HeaderValue;
 use poem::middleware::Cors;
-use poem::web::headers::{ContentRange, Header};
 use poem_openapi::{ApiResponse, Multipart, Object, OpenApi, OpenApiService};
 use poem_openapi::param::{Path, Query};
 use poem_openapi::payload::{Binary, Json, PlainText};
 use poem_openapi::types::multipart::Upload;
 use sha2::{Digest, Sha256};
-use tracing::{debug, error};
 
 struct Api;
 
@@ -49,10 +46,6 @@ enum UploadResponse {
     /// Returned when the path is invalid
     #[oai(status = 403)]
     Forbidden,
-
-    /// Returned when the request is mal formatted
-    #[oai(status = 400)]
-    BadRequest,
 }
 
 #[derive(ApiResponse)]
@@ -129,34 +122,6 @@ impl Api {
             iv,
             name: collection,
         }))
-    }
-
-    #[oai(path = "/collection/:collection/stream", method = "post")]
-    async fn stream_file(
-        &self,
-        Path(collection): Path<String>,
-        #[oai(name = "content-range")] content_range: poem_openapi::param::Header<String>,
-        Binary(upload): Binary<Vec<u8>>,
-    ) -> poem::Result<UploadResponse> {
-        match HeaderValue::try_from(content_range.as_str()) {
-            Ok(content_range_header_value) => {
-                let header_values = [content_range_header_value];
-                match ContentRange::decode(&mut header_values.iter()) {
-                    Ok(range) => {
-                        println!("'{}' '{:?}' '{}' bytes", collection, range, upload.len());
-                        Ok(UploadResponse::Created)
-                    }
-                    Err(err) => {
-                        error!("{err}");
-                        Ok(UploadResponse::BadRequest)
-                    }
-                }
-            }
-            Err(err) => {
-                error!("{err}");
-                Ok(UploadResponse::BadRequest)
-            }
-        }
     }
 
     #[oai(path = "/collection/:collection", method = "post")]

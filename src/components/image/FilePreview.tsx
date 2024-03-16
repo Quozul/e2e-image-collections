@@ -6,7 +6,7 @@ import { useState } from "react";
 
 type Props = {
   collection: CollectionItem;
-  refreshCollection: () => void;
+  refreshCollection: () => Promise<void>;
   imageName: string;
 };
 
@@ -102,7 +102,14 @@ export default function FilePreview({ collection, refreshCollection, imageName }
                 setIsDeleting(true);
                 try {
                   await deleteFile(collection.name, imageName);
-                  refreshCollection();
+                  await refreshCollection();
+                  if (image.nextImageUrl !== null) {
+                    navigate(image.nextImageUrl);
+                  } else if (image.previousImageUrl !== null) {
+                    navigate(image.previousImageUrl);
+                  } else {
+                    navigate(`/collection/${collection.name}`);
+                  }
                 } finally {
                   setIsDeleting(false);
                 }

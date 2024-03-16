@@ -24,7 +24,7 @@ export default function CollectionPage() {
   } = useCollection(String(collectionName));
 
   return (
-    <div className="flex-col p-2">
+    <div className="flex-col p-2 grow-1">
       <div className="flex wrap-1 w-100 justify-space-between">
         <h1>Collection: {collection?.name ?? collectionName}</h1>
 
@@ -63,10 +63,12 @@ export default function CollectionPage() {
           ) : (
             <>
               {paginatedCollection.length > 0 ? (
-                <div className="grid cols-1 sm:cols-2 md:cols-3 lg:cols-4 xxl:cols-6 grow-1">
-                  {paginatedCollection.map((name) => (
-                    <EncryptedImage cover={cover} key={name} collection={collection} imageName={name} />
-                  ))}
+                <div className="grow-1">
+                  <div className="grid cols-1 sm:cols-2 md:cols-3 lg:cols-4 xxl:cols-6">
+                    {paginatedCollection.map((name) => (
+                      <EncryptedImage cover={cover} key={name} collection={collection} imageName={name} />
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <div className="flex p-2 bg-background-muted justify-center">This page is empty.</div>

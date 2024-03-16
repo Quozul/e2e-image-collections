@@ -7,77 +7,64 @@
  * https://github.com/mozilla/send/blob/ade10e496c064d3b29191dd33b1066bf99607d74/app/ece.js#L188
  */
 
-async function* chunked(array: Blob, padding: number, chunkSize: number) {
-  for (let i = padding; i < array.size; i += chunkSize) {
-    const start = i,
-      end = i + chunkSize;
-    const chunk = await array.slice(start, end).arrayBuffer();
-    yield { chunk, start, end };
+export class Encryption {
+  private constructor(private key: CryptoKey) {}
+
+  static async load(password: string): Promise<Encryption> {
+    const encoder = new TextEncoder();
+    const encodedPassword = encoder.encode(password);
+    const keyData = await crypto.subtle.digest({ name: "SHA-256" }, encodedPassword);
+    const key = await crypto.subtle.importKey("raw", keyData, { name: ALGORITHM }, false, ["encrypt", "decrypt"]);
+
+    return new Encryption(key);
   }
-}
 
-// Constants
-const sliceSize = 16_777_216; // 16 MiB
-// const sliceSize = 1024; // 1 KiB
-const ivSize = 16;
-const algorithm = "AES-GCM";
-const password = "password";
+  async encrypt(input: Blob): Promise<Blob> {
+    const blobParts: BlobPart[] = [];
 
-// Generate a key
-const encoder = new TextEncoder();
-const encodedPassword = encoder.encode(password);
-const keyData = await crypto.subtle.digest({ name: "SHA-256" }, encodedPassword);
-const key = await crypto.subtle.importKey("raw", keyData, { name: algorithm }, false, ["encrypt", "decrypt"]);
+    // Generate a random 16B initialization vector to encrypt the first chunk
+    let iv = generateIv(IV_SIZE);
+    blobParts.push(iv.buffer);
 
-function generateIv(ivSize: number = 16) {
-  const iv = new Uint8Array(ivSize);
-  crypto.getRandomValues(iv);
-  return iv;
-}
+    for await (const chunk of chunked(input, 0, SLICE_SIZE)) {
+      blobParts.push(await crypto.subtle.encrypt({ name: ALGORITHM, iv }, this.key, chunk));
 
-async function sendChunk(chunk: Uint8Array, start: number, end: number) {
-  await fetch(`${import.meta.env.VITE_API_URL}/collection/stream`, {
-    method: "post",
-    headers: {
-      "content-range": `bytes ${start}-${end}/*`,
-      "content-type": "application/octet-stream",
-    },
-    body: chunk,
-  });
-}
-
-export async function encryption(inputFile: File) {
-  let iv = generateIv();
-
-  await sendChunk(iv, 0, 16);
-
-  for await (const { chunk, start, end } of chunked(inputFile, 0, sliceSize)) {
-    const encryptedChunk = await crypto.subtle.encrypt({ name: algorithm, iv }, key, chunk);
-    const bytes = new Uint8Array(encryptedChunk);
-
-    await sendChunk(bytes, start, end);
-
-    const nextIv = chunk.slice(chunk.byteLength - ivSize, chunk.byteLength);
-    iv = new Uint8Array(nextIv);
-  }
-}
-
-export async function decryption(inputFile: Blob) {
-  const rawIv = inputFile.slice(0, ivSize);
-  let iv = new Uint8Array(await rawIv.arrayBuffer());
-
-  const file: number[] = [];
-
-  for await (const { chunk, start, end } of chunked(inputFile, ivSize, sliceSize + ivSize)) {
-    const decryptedChunk = await crypto.subtle.decrypt({ name: algorithm, iv }, key, chunk);
-    const bytes = new Uint8Array(decryptedChunk);
-
-    for (const byte of bytes) {
-      file.push(byte);
+      // Re-use the last unencrypted 16B as the IV for the next chunk
+      const nextIv = chunk.slice(chunk.byteLength - IV_SIZE, chunk.byteLength);
+      iv = new Uint8Array(nextIv);
     }
 
-    iv = bytes.slice(bytes.length - ivSize, bytes.length);
+    return new Blob(blobParts);
   }
 
-  return new Blob([new Uint8Array(file)]);
+  async decrypt(input: Blob): Promise<Blob> {
+    const blobParts: BlobPart[] = [];
+    const rawIv = input.slice(0, IV_SIZE);
+    let iv = new Uint8Array(await rawIv.arrayBuffer());
+
+    for await (const chunk of chunked(input, IV_SIZE, SLICE_SIZE + IV_SIZE)) {
+      const decryptedChunk = await crypto.subtle.decrypt({ name: ALGORITHM, iv }, this.key, chunk);
+      blobParts.push(decryptedChunk);
+
+      const nextIv = decryptedChunk.slice(decryptedChunk.byteLength - IV_SIZE, decryptedChunk.byteLength);
+      iv = new Uint8Array(nextIv);
+    }
+
+    return new Blob(blobParts);
+  }
 }
+
+async function* chunked(blob: Blob, padding: number, chunkSize: number): AsyncGenerator<ArrayBuffer> {
+  for (let i = padding; i < blob.size; i += chunkSize) {
+    yield await blob.slice(i, i + chunkSize).arrayBuffer();
+  }
+}
+
+function generateIv(ivSize: number = IV_SIZE): Uint8Array {
+  const iv = new Uint8Array(ivSize);
+  return crypto.getRandomValues(iv), iv;
+}
+
+const SLICE_SIZE = 16_777_216; // 16 MiB
+const IV_SIZE = 16;
+const ALGORITHM = "AES-GCM";

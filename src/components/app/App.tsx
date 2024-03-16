@@ -42,7 +42,9 @@ function App() {
         }}
       >
         <label className="flex-col">
-          Collection
+          <span>
+            Collection <span className="text-text-muted">(will not be encrypted)</span>
+          </span>
           <input
             type="text"
             placeholder="Collection"
@@ -68,7 +70,9 @@ function App() {
         </label>
 
         <label className="flex-col">
-          Password
+          <span>
+            Password <span className="text-text-muted">(must be strong)</span>
+          </span>
           <input
             type="password"
             placeholder="Password"

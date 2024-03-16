@@ -2,12 +2,6 @@ import { decodeBase64UrlToArrayBuffer, decrypt, decryptString, encryptFile } fro
 import { uploadFiles } from "~/helpers/api";
 import safeMime from "~/helpers/safeMime";
 
-function* chunked<T>(array: T[], chunkSize: number = 10) {
-  for (let i = 0; i < array.length; i += chunkSize) {
-    yield array.slice(i, i + chunkSize);
-  }
-}
-
 async function processFiles(data: FileSystemDirectoryHandle | FileList, key: CryptoKey, iv: Uint8Array, collection: string) {
   const files: File[] = [];
 

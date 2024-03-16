@@ -1,5 +1,3 @@
-import safeMime from "~/helpers/safeMime";
-
 export async function getKey(password: string): Promise<CryptoKey> {
   const encoder = new TextEncoder();
   const encodedPassword = encoder.encode(password);
@@ -56,11 +54,6 @@ async function encrypt(key: CryptoKey, data: BufferSource, iv: Uint8Array): Prom
   return await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, data);
 }
 
-export async function encryptString(key: CryptoKey, iv: Uint8Array, payload: string, fileName: string) {
-  const encryptedContent = await encrypt(key, extractBytesFromString(payload), iv);
-  return new File([encryptedContent], fileName);
-}
-
 export async function encryptFile(key: CryptoKey, iv: Uint8Array, file: File) {
   const buffer = await file.arrayBuffer();
   const encryptedContent = await encrypt(key, buffer, iv);
@@ -83,32 +76,4 @@ export async function decryptString(cryptoKey: CryptoKey, iv: Uint8Array, payloa
 
   const decoder = new TextDecoder();
   return decoder.decode(decryptedBase64Name);
-}
-
-async function fetchAndDecrypt(cryptoKey: CryptoKey, iv: string, collectionName: string, imageName: string): Promise<ArrayBuffer> {
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/collection/${collectionName}/image/${imageName}`);
-  const buffer = await response.arrayBuffer();
-
-  return await decrypt(cryptoKey, buffer, extractBytesFromString(atob(iv)));
-}
-
-export async function fetchAndDecryptFile(cryptoKey: CryptoKey, iv: string, collectionName: string, imageName: string): Promise<File> {
-  const decrypted = await fetchAndDecrypt(cryptoKey, iv, collectionName, imageName);
-
-  const name = await decryptString(cryptoKey, extractBytesFromString(atob(iv)), decodeBase64UrlToArrayBuffer(imageName));
-  const type = safeMime(name) ?? "";
-
-  return new File([decrypted], name, { type });
-}
-
-export async function fetchAndDecryptString(cryptoKey: CryptoKey, iv: string, collectionName: string, imageName: string): Promise<string> {
-  try {
-    const decrypted = await fetchAndDecrypt(cryptoKey, iv, collectionName, imageName);
-
-    const decoder = new TextDecoder();
-    return decoder.decode(decrypted);
-  } catch (e) {
-    console.error(e);
-    return "";
-  }
 }

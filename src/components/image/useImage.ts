@@ -2,7 +2,8 @@ import { SyntheticEvent, useContext, useEffect, useState } from "react";
 import { CryptoContext } from "~/contexts/CryptoContext";
 import { CollectionItem } from "~/helpers/api";
 import { WorkerContext } from "~/contexts/WorkerContext";
-import { Image, Message, StatusMessage } from "~/workers/UploadWorker";
+import { Image, StatusMessage } from "~/workers/UploadWorker";
+import { Message } from "~/workers/Message";
 
 function useFile(collectionName: string, imageName: string, load = true): Image | null {
   const { key, iv } = useContext(CryptoContext);
