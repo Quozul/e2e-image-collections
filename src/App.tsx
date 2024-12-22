@@ -1,11 +1,14 @@
 import { type ChangeEvent, useEffect, useState } from "react";
-import { BlobEncryption } from "./Encryption.ts";
+import { BlobEncryption } from "./encryption/BlobEncryption.ts";
+import { PasswordKey } from "./encryption/PasswordKey.ts";
 
 export function App() {
 	const [encryption, setEncryption] = useState<BlobEncryption | null>(null);
 
 	useEffect(() => {
-		BlobEncryption.load("password").then(setEncryption);
+		PasswordKey.load("password").then((passwordKey) =>
+			setEncryption(new BlobEncryption(passwordKey)),
+		);
 	}, []);
 
 	const handleChange = async (event: ChangeEvent<HTMLInputElement>) => {

@@ -7,32 +7,15 @@
  * https://github.com/mozilla/send/blob/ade10e496c064d3b29191dd33b1066bf99607d74/app/ece.js#L188
  */
 
+import type { PasswordKey } from "./PasswordKey.ts";
+
 // Constants
-const SLICE_SIZE = 16_777_216; // 16 MiB
-const IV_SIZE = 16;
-const ALGORITHM = "AES-GCM";
+export const SLICE_SIZE = 16_777_216; // 16 MiB
+export const IV_SIZE = 16;
+export const ALGORITHM = "AES-GCM";
 
-class Encryption {
-	protected constructor(private key: CryptoKey) {}
-
-	protected static async load(password: string): Promise<Encryption> {
-		// Generate a key
-		const encoder = new TextEncoder();
-		const encodedPassword = encoder.encode(password);
-		const keyData = await crypto.subtle.digest(
-			{ name: "SHA-256" },
-			encodedPassword,
-		);
-		const key = await crypto.subtle.importKey(
-			"raw",
-			keyData,
-			{ name: ALGORITHM },
-			false,
-			["encrypt", "decrypt"],
-		);
-
-		return new Encryption(key);
-	}
+export class Encryption {
+	public constructor(private _passwordKey: PasswordKey) {}
 
 	protected async *encrypt(input: Blob): AsyncGenerator<ArrayBuffer> {
 		// Generate a random IV
@@ -43,7 +26,7 @@ class Encryption {
 		for await (const chunk of this.chunked(input, 0, SLICE_SIZE)) {
 			const encryptedChunk = await crypto.subtle.encrypt(
 				{ name: ALGORITHM, iv },
-				this.key,
+				this._passwordKey.key,
 				chunk,
 			);
 			yield encryptedChunk;
@@ -64,7 +47,7 @@ class Encryption {
 		)) {
 			const decryptedChunk = await crypto.subtle.decrypt(
 				{ name: ALGORITHM, iv },
-				this.key,
+				this._passwordKey.key,
 				chunk,
 			);
 			yield decryptedChunk;
@@ -120,50 +103,5 @@ class Encryption {
 		return Array.from(new Uint8Array(buffer))
 			.map((x) => x.toString(16).padStart(2, "0"))
 			.join("");
-	}
-}
-
-export class BlobEncryption extends Encryption {
-	static async load(password: string): Promise<BlobEncryption> {
-		// Generate a key
-		const encoder = new TextEncoder();
-		const encodedPassword = encoder.encode(password);
-		const keyData = await crypto.subtle.digest(
-			{ name: "SHA-256" },
-			encodedPassword,
-		);
-		const key = await crypto.subtle.importKey(
-			"raw",
-			keyData,
-			{ name: ALGORITHM },
-			false,
-			["encrypt", "decrypt"],
-		);
-
-		return new BlobEncryption(key);
-	}
-
-	public async encryptBlob(input: Blob): Promise<Blob> {
-		const blobParts: BlobPart[] = [];
-
-		for await (const encryptedArrayBuffer of this.encrypt(input)) {
-			blobParts.push(encryptedArrayBuffer);
-		}
-
-		return new Blob(blobParts);
-	}
-
-	public async decryptBlob(input: Blob): Promise<Blob> {
-		const blobParts: BlobPart[] = [];
-
-		for await (const decryptedArrayBuffer of this.decrypt(input)) {
-			blobParts.push(decryptedArrayBuffer);
-		}
-
-		return new Blob(blobParts);
-	}
-
-	public async digestBlob(input: Blob): Promise<string> {
-		return this.digest(input);
 	}
 }
