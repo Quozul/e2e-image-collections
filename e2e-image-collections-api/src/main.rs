@@ -1,9 +1,12 @@
 mod content_range;
+mod list_handler;
 mod upload_handler;
 
+use crate::list_handler::list_handler;
 use crate::upload_handler::upload_handler;
 use axum::extract::DefaultBodyLimit;
 use axum::http::Method;
+use axum::routing::get;
 use axum::{Router, routing::post};
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::limit::RequestBodyLimitLayer;
@@ -42,6 +45,7 @@ async fn main() {
 
     let app = Router::new()
         .route("/upload/{filename}", post(upload_handler))
+        .route("/files", get(list_handler))
         .layer(DefaultBodyLimit::disable())
         .layer(TraceLayer::new_for_http())
         .layer(RequestBodyLimitLayer::new(UPLOAD_SIZE_LIMIT))

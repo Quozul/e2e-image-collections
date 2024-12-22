@@ -1,8 +1,10 @@
 import type { ChangeEvent } from "react";
 import { useWorkerEncryption } from "./encryption/useWorkerEncryption.ts";
+import { useList } from "./hooks/useList.ts";
 
 export function App() {
 	const { encryptBlob, progress, isReady } = useWorkerEncryption("password");
+	const { data: files } = useList();
 
 	const handleChange = async (event: ChangeEvent<HTMLInputElement>) => {
 		event.preventDefault();
@@ -22,6 +24,14 @@ export function App() {
 		<>
 			<input type="file" multiple onChange={handleChange} disabled={!isReady} />
 			<progress value={progress} />
+
+			<div>
+				{files.map((file) => (
+					<button type="button" key={file}>
+						{file}
+					</button>
+				))}
+			</div>
 		</>
 	);
 }
