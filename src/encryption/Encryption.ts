@@ -10,8 +10,8 @@
 import type { PasswordKey } from "./PasswordKey.ts";
 
 // Constants
-export const SLICE_SIZE = 16_777_216; // 16 MiB
 export const IV_SIZE = 16;
+export const SLICE_SIZE = 16_777_216 /* 16 MiB */ - IV_SIZE;
 export const ALGORITHM = "AES-GCM";
 
 export class Encryption {

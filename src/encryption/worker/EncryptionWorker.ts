@@ -9,7 +9,7 @@ globalThis.onmessage = async (e) => {
 			handlePassword(message.password);
 			break;
 		case "encryptBlob":
-			await handleBlob(message.blob);
+			await handleBlob(message.file);
 			break;
 		default:
 			console.error(`Unknown message type ${message.type}`);
@@ -33,13 +33,13 @@ function handlePassword(password: string) {
 		});
 }
 
-async function handleBlob(blob: Blob) {
+async function handleBlob(file: File) {
 	if (encryption === null) {
 		console.error("Password must be set first");
 		return;
 	}
 	try {
-		const generator = encryption.encryptBlob(blob);
+		const generator = encryption.encryptFile(file);
 		for await (const progress of generator) {
 			const progressMessage: ApiEncryptionWorkerMessage = {
 				type: "progress",

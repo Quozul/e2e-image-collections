@@ -23,13 +23,13 @@ export function useWorkerEncryption(password: string) {
 	}, []);
 
 	const encryptBlob = useCallback(
-		async (blob: Blob): Promise<void> => {
+		async (file: File): Promise<void> => {
 			if (!isReady || !worker) {
 				throw new Error("Worker is already ready");
 			}
 			const message: ApiEncryptionWorkerMessage = {
 				type: "encryptBlob",
-				blob,
+				file,
 			};
 			worker.postMessage(message);
 		},

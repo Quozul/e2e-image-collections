@@ -9,7 +9,7 @@ type PasswordMessage = WorkerMessage<"password"> & {
 };
 
 type EncryptBlobMessage = WorkerMessage<"encryptBlob"> & {
-	blob: Blob;
+	file: File;
 };
 
 type DecryptBlobMessage = WorkerMessage<"decryptBlob"> & {
