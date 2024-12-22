@@ -29,10 +29,18 @@ type DecryptedMessage = WorkerMessage<"decryptedBlob"> & {
 	fileName: string;
 };
 
+type UploadDoneMessage = WorkerMessage<"uploadDone">;
+
+type ErrorMessage = WorkerMessage<"error"> & {
+	error: unknown;
+};
+
 export type ApiEncryptionWorkerMessage =
 	| PasswordMessage
 	| DecryptBlobMessage
 	| EncryptBlobMessage
 	| PasswordReceived
 	| ProgressMessage
-	| DecryptedMessage;
+	| DecryptedMessage
+	| ErrorMessage
+	| UploadDoneMessage;

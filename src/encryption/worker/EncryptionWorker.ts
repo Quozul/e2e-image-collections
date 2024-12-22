@@ -15,7 +15,7 @@ globalThis.onmessage = async (e) => {
 			await handleDecrypt(message.fileName);
 			break;
 		default:
-			console.error(`Unknown message type ${message.type}`);
+			sendError(`Unknown message type ${message.type}`);
 			break;
 	}
 };
@@ -23,11 +23,7 @@ globalThis.onmessage = async (e) => {
 let encryption: ProgressEncryption | null = null;
 
 function handlePassword(password: string) {
-	const message: ApiEncryptionWorkerMessage = {
-		type: "passwordReceived",
-	};
-	globalThis.postMessage(message);
-	console.log(`Password received: ${password}`);
+	sendMessage({ type: "passwordReceived" });
 
 	PasswordKey.load(password)
 		.then((passwordKey) => new ProgressEncryption(passwordKey))
@@ -38,27 +34,23 @@ function handlePassword(password: string) {
 
 async function handleBlob(file: File) {
 	if (encryption === null) {
-		console.error("Password must be set first");
-		return;
+		return sendError("Password must be set first");
 	}
+
 	try {
 		const generator = encryption.encryptFile(file);
 		for await (const progress of generator) {
-			const progressMessage: ApiEncryptionWorkerMessage = {
-				type: "progress",
-				progress,
-			};
-			globalThis.postMessage(progressMessage);
+			sendMessage({ type: "progress", progress });
 		}
+		sendMessage({ type: "uploadDone" });
 	} catch (error) {
-		console.error(error);
+		sendError(error);
 	}
 }
 
 async function handleDecrypt(fileName: string) {
 	if (encryption === null) {
-		console.error("Password must be set first");
-		return;
+		return sendError("Password must be set first");
 	}
 	try {
 		const generator = encryption.decryptBlob(fileName);
@@ -67,20 +59,20 @@ async function handleDecrypt(fileName: string) {
 		// biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
 		while (!(result = await generator.next()).done) {
 			if (typeof result.value === "number") {
-				const progressMessage: ApiEncryptionWorkerMessage = {
-					type: "progress",
-					progress: result.value,
-				};
-				globalThis.postMessage(progressMessage);
+				sendMessage({ type: "progress", progress: result.value });
 			}
 		}
-		const progressMessage: ApiEncryptionWorkerMessage = {
-			type: "decryptedBlob",
-			blob: result.value,
-			fileName,
-		};
-		globalThis.postMessage(progressMessage);
+		sendMessage({ type: "decryptedBlob", blob: result.value, fileName });
 	} catch (error) {
-		console.error(error);
+		sendError(error);
 	}
+}
+
+function sendMessage(message: ApiEncryptionWorkerMessage) {
+	globalThis.postMessage(message);
+}
+
+function sendError(error: unknown) {
+	console.error(error);
+	sendMessage({ type: "error", error });
 }

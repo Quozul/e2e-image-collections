@@ -18,8 +18,8 @@ export class NetworkBlob implements Slice {
 			},
 		});
 
-		if (!response.ok && response.status !== 206) {
-			throw new Error(`Failed to fetch range ${start}-${end}`);
+		if (!response.ok || response.status !== 206) {
+			throw new Error("Unexpected response");
 		}
 
 		return await response.arrayBuffer();

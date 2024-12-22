@@ -1,11 +1,18 @@
-import type { ChangeEvent } from "react";
+import { type ChangeEvent, useState } from "react";
 import { useWorkerEncryption } from "./encryption/useWorkerEncryption.ts";
 import { useList } from "./hooks/useList.ts";
 
 export function App() {
-	const { encryptBlob, progress, isReady, decryptBlob } =
-		useWorkerEncryption("password");
-	const { data: files } = useList();
+	const [password, setPassword] = useState("");
+	const { data: files, refresh } = useList();
+	const { encryptBlob, progress, isReady, decryptBlob } = useWorkerEncryption(
+		password,
+		refresh,
+	);
+
+	const handlePasswordChange = (event: ChangeEvent<HTMLInputElement>) => {
+		setPassword(event.currentTarget.value);
+	};
 
 	const handleChange = async (event: ChangeEvent<HTMLInputElement>) => {
 		event.preventDefault();
@@ -23,16 +30,19 @@ export function App() {
 
 	return (
 		<>
+			<input type="password" onChange={handlePasswordChange} value={password} />
 			<input type="file" multiple onChange={handleChange} disabled={!isReady} />
 			<progress value={progress} />
 
-			<div>
+			<ul>
 				{files.map((file) => (
-					<button type="button" key={file} onClick={() => decryptBlob(file)}>
-						{file}
-					</button>
+					<li key={file}>
+						<button type="button" onClick={() => decryptBlob(file)}>
+							{file}
+						</button>
+					</li>
 				))}
-			</div>
+			</ul>
 		</>
 	);
 }

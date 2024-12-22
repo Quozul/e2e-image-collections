@@ -3,7 +3,7 @@ use crate::error_handler::AppError;
 use crate::range::Range;
 use axum::body::Body;
 use axum::extract::Path;
-use axum::http::{HeaderMap, Response, header};
+use axum::http::{HeaderMap, Response, StatusCode, header};
 use std::io::SeekFrom;
 use std::str::FromStr;
 use tokio::fs::OpenOptions;
@@ -28,6 +28,7 @@ pub async fn get_file(
             header::HeaderValue::from_str("application/octet-stream")?,
         )
         .header(header::CONTENT_RANGE, range.to_string())
+        .status(StatusCode::PARTIAL_CONTENT)
         .body(Body::from(bytes))?;
 
     Ok(response)

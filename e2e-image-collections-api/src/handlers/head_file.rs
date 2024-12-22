@@ -2,7 +2,7 @@ use crate::UPLOADS_DIRECTORY;
 use crate::error_handler::AppError;
 use axum::body::Body;
 use axum::extract::Path;
-use axum::http::{Response, header};
+use axum::http::{Response, StatusCode, header};
 use std::os::unix::fs::MetadataExt;
 
 pub async fn head_file(Path(filename): Path<String>) -> anyhow::Result<Response<Body>, AppError> {
@@ -11,6 +11,7 @@ pub async fn head_file(Path(filename): Path<String>) -> anyhow::Result<Response<
 
     let response = Response::builder()
         .header(header::CONTENT_LENGTH, size)
+        .status(StatusCode::NO_CONTENT)
         .body(Body::empty())?;
 
     Ok(response)

@@ -1,5 +1,5 @@
 import { useFetch } from "./useFetch.ts";
 
 export function useList() {
-	return useFetch<string[]>("http://localhost:3000/file", []);
+	return useFetch<string[]>(`${import.meta.env.VITE_API_BASE_URL}/file`, []);
 }

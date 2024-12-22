@@ -3,74 +3,69 @@ import { download } from "../utils/download.ts";
 import ApiEncryptionWorker from "./worker/EncryptionWorker.ts?worker";
 import type { ApiEncryptionWorkerMessage } from "./worker/messages.ts";
 
-export function useWorkerEncryption(password: string) {
+export function useWorkerEncryption(password: string, refresh: () => void) {
 	const [isReady, setIsReady] = useState(false);
 	const [worker, setWorker] = useState<Worker>();
 	const [progress, setProgress] = useState(0);
 
-	const handleMessage = useCallback((event: MessageEvent) => {
-		const message: ApiEncryptionWorkerMessage = event.data;
-		switch (message.type) {
-			case "passwordReceived":
-				setIsReady(true);
-				break;
-			case "progress":
-				setProgress(message.progress);
-				break;
-			case "decryptedBlob":
-				console.log(message.blob);
-				download(message.blob, message.fileName);
-				break;
-			default:
-				console.error(`Unknown message type ${message.type}`);
-				break;
-		}
-	}, []);
-
-	const encryptBlob = useCallback(
-		async (file: File): Promise<void> => {
-			if (!isReady || !worker) {
-				throw new Error("Worker is already ready");
+	const sendMessage = useCallback(
+		(message: ApiEncryptionWorkerMessage) => {
+			if (!worker) {
+				throw new Error("Worker is not ready");
 			}
-			const message: ApiEncryptionWorkerMessage = {
-				type: "encryptBlob",
-				file,
-			};
 			worker.postMessage(message);
 		},
-		[worker, isReady],
+		[worker],
 	);
 
-	const decryptBlob = useCallback(
-		async (fileName: string): Promise<void> => {
-			if (!isReady || !worker) {
-				throw new Error("Worker is already ready");
-			}
-			const message: ApiEncryptionWorkerMessage = {
-				type: "decryptBlob",
-				fileName,
-			};
-			worker.postMessage(message);
-		},
-		[worker, isReady],
-	);
+	const encryptBlob = async (file: File): Promise<void> => {
+		sendMessage({
+			type: "encryptBlob",
+			file,
+		});
+	};
+
+	const decryptBlob = async (fileName: string): Promise<void> => {
+		sendMessage({
+			type: "decryptBlob",
+			fileName,
+		});
+	};
 
 	useEffect(() => {
 		const worker = new ApiEncryptionWorker();
+		const handleMessage = (event: MessageEvent) => {
+			const message: ApiEncryptionWorkerMessage = event.data;
+			if (message.type === "passwordReceived") {
+				setIsReady(true);
+			} else if (message.type === "progress") {
+				setProgress(message.progress);
+			} else if (message.type === "decryptedBlob") {
+				download(message.blob, message.fileName);
+			} else if (message.type === "uploadDone") {
+				refresh();
+			} else if (message.type === "error") {
+				alert(message.error);
+			} else {
+				console.error(`Unknown message type ${message.type}`);
+			}
+		};
 		worker.addEventListener("message", handleMessage);
 		setWorker(worker);
-	}, [handleMessage]);
+
+		return () => {
+			worker.removeEventListener("message", handleMessage);
+		};
+	}, [refresh]);
 
 	useEffect(() => {
 		if (worker) {
-			const message: ApiEncryptionWorkerMessage = {
+			sendMessage({
 				type: "password",
-				password: password,
-			};
-
-			worker.postMessage(message);
+				password,
+			});
 		}
-	}, [worker, password]);
+	}, [sendMessage, worker, password]);
 
 	return { progress, encryptBlob, isReady, decryptBlob };
 }

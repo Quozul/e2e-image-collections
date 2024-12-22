@@ -9,12 +9,11 @@ export class ProgressEncryption extends Encryption {
 		let chunk = 0;
 		let writtenBytes = 0;
 		const totalChunks = this.chunkCount(asyncBlob.size);
-		console.log(`There are ${totalChunks} chunks`);
 
 		for await (const encryptedArrayBuffer of this.encrypt(asyncBlob)) {
 			const rangeStart = writtenBytes;
 			const rangeEnd = rangeStart + encryptedArrayBuffer.byteLength;
-			await fetch(`http://localhost:3000/file/${input.name}`, {
+			await fetch(`${import.meta.env.VITE_API_BASE_URL}/file/${input.name}`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/octet-stream",
@@ -31,15 +30,12 @@ export class ProgressEncryption extends Encryption {
 
 	public async *decryptBlob(fileName: string): AsyncGenerator<number, Blob> {
 		const networkBlob = await NetworkBlob.load(
-			`http://localhost:3000/file/${fileName}`,
+			`${import.meta.env.VITE_API_BASE_URL}/file/${fileName}`,
 		);
 		const totalSize = networkBlob.size;
 		let chunk = 0;
 		let readBytes = 0;
 		const totalChunks = this.chunkCount(totalSize);
-		console.log(
-			`Length of ${fileName}: ${totalSize} bytes, there are ${totalChunks} chunks`,
-		);
 
 		const blobParts: BlobPart[] = [];
 
