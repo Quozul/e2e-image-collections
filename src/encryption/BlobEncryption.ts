@@ -1,10 +1,12 @@
+import { AsyncBlob } from "./AsyncBlob.ts";
 import { Encryption } from "./Encryption.ts";
 
 export class BlobEncryption extends Encryption {
 	public async encryptBlob(input: Blob): Promise<Blob> {
 		const blobParts: BlobPart[] = [];
 
-		for await (const encryptedArrayBuffer of this.encrypt(input)) {
+		const asyncBlob = new AsyncBlob(input);
+		for await (const encryptedArrayBuffer of this.encrypt(asyncBlob)) {
 			blobParts.push(encryptedArrayBuffer);
 		}
 
@@ -14,7 +16,8 @@ export class BlobEncryption extends Encryption {
 	public async decryptBlob(input: Blob): Promise<Blob> {
 		const blobParts: BlobPart[] = [];
 
-		for await (const decryptedArrayBuffer of this.decrypt(input)) {
+		const asyncBlob = new AsyncBlob(input);
+		for await (const decryptedArrayBuffer of this.decrypt(asyncBlob)) {
 			blobParts.push(decryptedArrayBuffer);
 		}
 
@@ -22,6 +25,7 @@ export class BlobEncryption extends Encryption {
 	}
 
 	public async digestBlob(input: Blob): Promise<string> {
-		return this.digest(input);
+		const asyncBlob = new AsyncBlob(input);
+		return this.digest(asyncBlob);
 	}
 }

@@ -1,15 +1,20 @@
+import { AsyncBlob } from "./AsyncBlob.ts";
 import { Encryption, SLICE_SIZE } from "./Encryption.ts";
+import { NetworkBlob } from "./NetworkBlob.ts";
 
 export class ProgressEncryption extends Encryption {
 	public async *encryptFile(input: File): AsyncGenerator<number> {
+		const asyncBlob = new AsyncBlob(input);
+
 		let chunk = 0;
 		let writtenBytes = 0;
-		const totalChunks = this.chunkCount(input, SLICE_SIZE);
+		const totalChunks = this.chunkCount(asyncBlob.size);
+		console.log(`There are ${totalChunks} chunks`);
 
-		for await (const encryptedArrayBuffer of this.encrypt(input)) {
+		for await (const encryptedArrayBuffer of this.encrypt(asyncBlob)) {
 			const rangeStart = writtenBytes;
 			const rangeEnd = rangeStart + encryptedArrayBuffer.byteLength;
-			await fetch(`http://localhost:3000/upload/${input.name}`, {
+			await fetch(`http://localhost:3000/file/${input.name}`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/octet-stream",
@@ -24,16 +29,31 @@ export class ProgressEncryption extends Encryption {
 		}
 	}
 
-	public async *decryptBlob(input: Blob): AsyncGenerator<number, Blob> {
+	public async *decryptBlob(fileName: string): AsyncGenerator<number, Blob> {
+		const networkBlob = await NetworkBlob.load(
+			`http://localhost:3000/file/${fileName}`,
+		);
+		const totalSize = networkBlob.size;
 		let chunk = 0;
-		const totalChunks = this.chunkCount(input, SLICE_SIZE);
+		let readBytes = 0;
+		const totalChunks = this.chunkCount(totalSize);
+		console.log(
+			`Length of ${fileName}: ${totalSize} bytes, there are ${totalChunks} chunks`,
+		);
+
 		const blobParts: BlobPart[] = [];
 
-		for await (const decryptedArrayBuffer of this.decrypt(input)) {
+		for await (const decryptedArrayBuffer of this.decrypt(networkBlob)) {
 			blobParts.push(decryptedArrayBuffer);
-			yield chunk++ / totalChunks;
+
+			readBytes += decryptedArrayBuffer.byteLength;
+			yield ++chunk / totalChunks;
 		}
 
 		return new Blob(blobParts);
+	}
+
+	private chunkCount(size: number): number {
+		return Math.ceil(size / SLICE_SIZE);
 	}
 }

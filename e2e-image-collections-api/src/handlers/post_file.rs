@@ -12,7 +12,7 @@ use tokio::fs::OpenOptions;
 use tokio::io::{AsyncSeekExt, BufWriter};
 use tokio_util::io::StreamReader;
 
-pub async fn upload_handler(
+pub async fn post_file(
     Path(filename): Path<String>,
     headers: axum::http::HeaderMap,
     request: axum::extract::Request,

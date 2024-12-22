@@ -3,7 +3,8 @@ import { useWorkerEncryption } from "./encryption/useWorkerEncryption.ts";
 import { useList } from "./hooks/useList.ts";
 
 export function App() {
-	const { encryptBlob, progress, isReady } = useWorkerEncryption("password");
+	const { encryptBlob, progress, isReady, decryptBlob } =
+		useWorkerEncryption("password");
 	const { data: files } = useList();
 
 	const handleChange = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -27,7 +28,7 @@ export function App() {
 
 			<div>
 				{files.map((file) => (
-					<button type="button" key={file}>
+					<button type="button" key={file} onClick={() => decryptBlob(file)}>
 						{file}
 					</button>
 				))}

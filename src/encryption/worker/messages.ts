@@ -13,7 +13,7 @@ type EncryptBlobMessage = WorkerMessage<"encryptBlob"> & {
 };
 
 type DecryptBlobMessage = WorkerMessage<"decryptBlob"> & {
-	blob: Blob;
+	fileName: string;
 };
 
 // Sent by the worker
@@ -24,9 +24,15 @@ type ProgressMessage = WorkerMessage<"progress"> & {
 	progress: number;
 };
 
+type DecryptedMessage = WorkerMessage<"decryptedBlob"> & {
+	blob: Blob;
+	fileName: string;
+};
+
 export type ApiEncryptionWorkerMessage =
 	| PasswordMessage
 	| DecryptBlobMessage
 	| EncryptBlobMessage
 	| PasswordReceived
-	| ProgressMessage;
+	| ProgressMessage
+	| DecryptedMessage;

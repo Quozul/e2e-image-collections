@@ -7,6 +7,7 @@
  * https://github.com/mozilla/send/blob/ade10e496c064d3b29191dd33b1066bf99607d74/app/ece.js#L188
  */
 
+import type { Slice } from "./AsyncBlob.ts";
 import type { PasswordKey } from "./PasswordKey.ts";
 
 // Constants
@@ -17,7 +18,7 @@ export const ALGORITHM = "AES-GCM";
 export class Encryption {
 	public constructor(private _passwordKey: PasswordKey) {}
 
-	protected async *encrypt(input: Blob): AsyncGenerator<ArrayBuffer> {
+	protected async *encrypt(input: Slice): AsyncGenerator<ArrayBuffer> {
 		// Generate a random IV
 		let iv = this.generateIv(IV_SIZE);
 		yield iv.buffer;
@@ -36,9 +37,9 @@ export class Encryption {
 		}
 	}
 
-	protected async *decrypt(input: Blob): AsyncGenerator<ArrayBuffer> {
-		const rawIv = input.slice(0, IV_SIZE);
-		let iv = new Uint8Array(await rawIv.arrayBuffer());
+	protected async *decrypt(input: Slice): AsyncGenerator<ArrayBuffer> {
+		const rawIv = await input.slice(0, IV_SIZE);
+		let iv = new Uint8Array(rawIv);
 
 		for await (const chunk of this.chunked(
 			input,
@@ -60,7 +61,7 @@ export class Encryption {
 		}
 	}
 
-	protected async digest(input: Blob): Promise<string> {
+	protected async digest(input: Slice): Promise<string> {
 		let hash = new ArrayBuffer(0);
 
 		for await (const chunk of this.chunked(input, 0, SLICE_SIZE)) {
@@ -73,10 +74,6 @@ export class Encryption {
 		return this.arrayBufferToHex(hash);
 	}
 
-	protected chunkCount(blob: Blob, chunkSize: number): number {
-		return Math.ceil(blob.size / chunkSize);
-	}
-
 	private generateIv(ivSize: number = IV_SIZE) {
 		const iv = new Uint8Array(ivSize);
 		crypto.getRandomValues(iv);
@@ -84,12 +81,13 @@ export class Encryption {
 	}
 
 	private async *chunked(
-		blob: Blob,
+		blob: Slice,
 		padding: number,
 		chunkSize: number,
 	): AsyncGenerator<ArrayBuffer> {
 		for (let i = padding; i < blob.size; i += chunkSize) {
-			yield await blob.slice(i, i + chunkSize).arrayBuffer();
+			const end = Math.min(i + chunkSize, blob.size);
+			yield await blob.slice(i, end);
 		}
 	}
 

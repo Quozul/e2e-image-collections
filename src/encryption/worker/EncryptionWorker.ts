@@ -11,6 +11,9 @@ globalThis.onmessage = async (e) => {
 		case "encryptBlob":
 			await handleBlob(message.file);
 			break;
+		case "decryptBlob":
+			await handleDecrypt(message.fileName);
+			break;
 		default:
 			console.error(`Unknown message type ${message.type}`);
 			break;
@@ -47,6 +50,36 @@ async function handleBlob(file: File) {
 			};
 			globalThis.postMessage(progressMessage);
 		}
+	} catch (error) {
+		console.error(error);
+	}
+}
+
+async function handleDecrypt(fileName: string) {
+	if (encryption === null) {
+		console.error("Password must be set first");
+		return;
+	}
+	try {
+		const generator = encryption.decryptBlob(fileName);
+
+		let result: IteratorResult<number | Blob>;
+		// biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
+		while (!(result = await generator.next()).done) {
+			if (typeof result.value === "number") {
+				const progressMessage: ApiEncryptionWorkerMessage = {
+					type: "progress",
+					progress: result.value,
+				};
+				globalThis.postMessage(progressMessage);
+			}
+		}
+		const progressMessage: ApiEncryptionWorkerMessage = {
+			type: "decryptedBlob",
+			blob: result.value,
+			fileName,
+		};
+		globalThis.postMessage(progressMessage);
 	} catch (error) {
 		console.error(error);
 	}
