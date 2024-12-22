@@ -1,5 +1,6 @@
 import type { FilePreview } from "./encryption/useWorkerEncryption.ts";
 import { useBlob } from "./hooks/useBlob.ts";
+import "@quozul/canvas-image/src/main.ts";
 
 type Props = {
 	preview: FilePreview;
@@ -13,15 +14,25 @@ export function Preview({ preview }: Props) {
 	}
 
 	if (preview.type?.startsWith("image/")) {
-		return <img src={previewUrl} alt={preview.name} />;
+		return (
+			<div className="grow overflow-hidden">
+				<canvas-image
+					className="block h-full"
+					src={previewUrl}
+					alt={preview.name}
+				/>
+			</div>
+		);
 	}
 
 	if (preview.type?.startsWith("video/")) {
 		return (
-			// biome-ignore lint/a11y/useMediaCaption: <explanation>
-			<video src={previewUrl} controls>
-				<source src={previewUrl} type={preview.type} />
-			</video>
+			<div className="grow overflow-hidden">
+				{/* biome-ignore lint/a11y/useMediaCaption: <explanation> */}
+				<video src={previewUrl} controls className="w-full h-full">
+					<source src={previewUrl} type={preview.type} />
+				</video>
+			</div>
 		);
 	}
 

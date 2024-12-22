@@ -13,7 +13,7 @@ pub async fn get_file(
     Path(filename): Path<String>,
     headers: HeaderMap,
 ) -> anyhow::Result<Response<Body>, AppError> {
-    let path = std::path::Path::new(UPLOADS_DIRECTORY).join(filename);
+    let path = std::path::Path::new(UPLOADS_DIRECTORY).join(filename); // TODO: Check if path is safe
     let range = get_range(&headers)?;
 
     let mut file = OpenOptions::new().read(true).open(path).await?;

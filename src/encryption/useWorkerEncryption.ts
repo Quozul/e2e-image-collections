@@ -92,5 +92,5 @@ export function useWorkerEncryption(password: string, refresh: () => void) {
 		}
 	}, [sendMessage, worker, password]);
 
-	return { progress, encryptBlob, isReady, decryptBlob, preview };
+	return { progress, encryptBlob, isReady, decryptBlob, preview, setPreview };
 }

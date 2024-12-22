@@ -3,6 +3,7 @@ mod error_handler;
 mod handlers;
 mod range;
 
+use crate::handlers::delete_file::delete_file;
 use crate::handlers::get_file::get_file;
 use axum::Router;
 use axum::extract::DefaultBodyLimit;
@@ -42,7 +43,7 @@ async fn main() {
     }
 
     let cors = CorsLayer::new()
-        .allow_methods([Method::GET, Method::POST])
+        .allow_methods([Method::GET, Method::POST, Method::HEAD, Method::DELETE])
         .allow_headers(Any)
         .allow_origin(Any);
 
@@ -50,7 +51,10 @@ async fn main() {
         .route("/file", get(get_files))
         .route(
             "/file/{filename}",
-            get(get_file).head(head_file).post(post_file),
+            get(get_file)
+                .head(head_file)
+                .post(post_file)
+                .delete(delete_file),
         )
         .layer(DefaultBodyLimit::disable())
         .layer(TraceLayer::new_for_http())
