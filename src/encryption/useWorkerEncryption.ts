@@ -1,12 +1,19 @@
+import mime from "mime";
 import { useCallback, useEffect, useState } from "react";
-import { download } from "../utils/download.ts";
 import ApiEncryptionWorker from "./worker/EncryptionWorker.ts?worker";
 import type { ApiEncryptionWorkerMessage } from "./worker/messages.ts";
+
+export type FilePreview = {
+	blob: Blob;
+	name: string;
+	type: string | null;
+};
 
 export function useWorkerEncryption(password: string, refresh: () => void) {
 	const [isReady, setIsReady] = useState(false);
 	const [worker, setWorker] = useState<Worker>();
 	const [progress, setProgress] = useState(0);
+	const [preview, setPreview] = useState<FilePreview | null>(null);
 
 	const sendMessage = useCallback(
 		(message: ApiEncryptionWorkerMessage) => {
@@ -41,7 +48,12 @@ export function useWorkerEncryption(password: string, refresh: () => void) {
 			} else if (message.type === "progress") {
 				setProgress(message.progress);
 			} else if (message.type === "decryptedBlob") {
-				download(message.blob, message.fileName);
+				const preview: FilePreview = {
+					type: mime.getType(message.fileName),
+					blob: message.blob,
+					name: message.fileName,
+				};
+				setPreview(preview);
 			} else if (message.type === "uploadDone") {
 				refresh();
 			} else if (message.type === "error") {
@@ -67,5 +79,5 @@ export function useWorkerEncryption(password: string, refresh: () => void) {
 		}
 	}, [sendMessage, worker, password]);
 
-	return { progress, encryptBlob, isReady, decryptBlob };
+	return { progress, encryptBlob, isReady, decryptBlob, preview };
 }

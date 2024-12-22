@@ -1,14 +1,13 @@
 import { type ChangeEvent, useState } from "react";
+import { Preview } from "./Preview.tsx";
 import { useWorkerEncryption } from "./encryption/useWorkerEncryption.ts";
 import { useList } from "./hooks/useList.ts";
 
 export function App() {
-	const [password, setPassword] = useState("");
+	const [password, setPassword] = useState("password");
 	const { data: files, refresh } = useList();
-	const { encryptBlob, progress, isReady, decryptBlob } = useWorkerEncryption(
-		password,
-		refresh,
-	);
+	const { encryptBlob, progress, isReady, decryptBlob, preview } =
+		useWorkerEncryption(password, refresh);
 
 	const handlePasswordChange = (event: ChangeEvent<HTMLInputElement>) => {
 		setPassword(event.currentTarget.value);
@@ -43,6 +42,8 @@ export function App() {
 					</li>
 				))}
 			</ul>
+
+			{preview && <Preview preview={preview} />}
 		</>
 	);
 }
