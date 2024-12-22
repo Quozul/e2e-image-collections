@@ -65,7 +65,7 @@ export function App() {
 			</div>
 
 			<ol className="h-20 overflow-y-auto list-decimal">
-				{files.map((file) => (
+				{files.sort().map((file) => (
 					<li key={file} className="">
 						<button type="button" onClick={() => decryptBlob(file)}>
 							{file}

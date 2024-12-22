@@ -1,0 +1,6 @@
+/.git
+.idea
+/node_modules
+/dist
+e2e-image-collections-api/target
+e2e-image-collections-api/uploads

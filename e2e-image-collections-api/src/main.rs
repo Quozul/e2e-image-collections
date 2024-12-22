@@ -5,10 +5,10 @@ mod range;
 
 use crate::handlers::delete_file::delete_file;
 use crate::handlers::get_file::get_file;
-use axum::Router;
 use axum::extract::DefaultBodyLimit;
 use axum::http::Method;
 use axum::routing::get;
+use axum::Router;
 use handlers::get_files::get_files;
 use handlers::head_file::head_file;
 use handlers::post_file::post_file;
@@ -62,9 +62,7 @@ async fn main() {
         .layer(cors);
 
     // run it
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     info!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
 }

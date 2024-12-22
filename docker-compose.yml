@@ -1,0 +1,13 @@
+services:
+  api:
+    build: e2e-image-collections-api
+    volumes:
+      - "uploads:/app/uploads"
+  web:
+    build: .
+    ports:
+      - "443:443"
+    depends_on:
+      - api
+volumes:
+  uploads: {}

@@ -16,6 +16,7 @@ export function Preview({ preview }: Props) {
 	if (preview.type?.startsWith("image/")) {
 		return (
 			<div className="grow overflow-hidden">
+				{/* @ts-ignore */}
 				<canvas-image
 					className="block h-full"
 					src={previewUrl}
