@@ -73,6 +73,10 @@ export class Encryption {
 		return this.arrayBufferToHex(hash);
 	}
 
+	protected chunkCount(blob: Blob, chunkSize: number): number {
+		return Math.ceil(blob.size / chunkSize);
+	}
+
 	private generateIv(ivSize: number = IV_SIZE) {
 		const iv = new Uint8Array(ivSize);
 		crypto.getRandomValues(iv);
