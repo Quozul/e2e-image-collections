@@ -1,5 +1,7 @@
 import mime from "mime";
 import { useCallback, useEffect, useState } from "react";
+import { DecryptionJob } from "./worker/DecryptionJob.ts";
+import { EncryptionJob } from "./worker/EncryptionJob.ts";
 import ApiEncryptionWorker from "./worker/EncryptionWorker.ts?worker";
 import type { ApiEncryptionWorkerMessage } from "./worker/messages.ts";
 
@@ -26,17 +28,43 @@ export function useWorkerEncryption(password: string, refresh: () => void) {
 	);
 
 	const encryptBlob = async (file: File): Promise<void> => {
-		sendMessage({
-			type: "encryptBlob",
-			file,
+		if (!worker) {
+			throw new Error("Worker is not ready");
+		}
+		const job = new EncryptionJob(worker, file);
+		job.addEventListener("onprogress", (event) => {
+			setProgress(event.progress);
 		});
+		job.addEventListener("onerror", (event) => {
+			alert(event.error);
+		});
+		job.addEventListener("oncomplete", () => {
+			refresh();
+		});
+		job.startJob();
 	};
 
 	const decryptBlob = async (fileName: string): Promise<void> => {
-		sendMessage({
-			type: "decryptBlob",
-			fileName,
+		if (!worker) {
+			throw new Error("Worker is not ready");
+		}
+
+		const job = new DecryptionJob(worker, fileName);
+		job.addEventListener("onprogress", (event) => {
+			setProgress(event.progress);
 		});
+		job.addEventListener("onerror", (event) => {
+			alert(event.error);
+		});
+		job.addEventListener("oncomplete", (event) => {
+			const preview: FilePreview = {
+				type: mime.getType(event.fileName),
+				blob: event.blob,
+				name: event.fileName,
+			};
+			setPreview(preview);
+		});
+		job.startJob();
 	};
 
 	useEffect(() => {
@@ -45,21 +73,6 @@ export function useWorkerEncryption(password: string, refresh: () => void) {
 			const message: ApiEncryptionWorkerMessage = event.data;
 			if (message.type === "passwordReceived") {
 				setIsReady(true);
-			} else if (message.type === "progress") {
-				setProgress(message.progress);
-			} else if (message.type === "decryptedBlob") {
-				const preview: FilePreview = {
-					type: mime.getType(message.fileName),
-					blob: message.blob,
-					name: message.fileName,
-				};
-				setPreview(preview);
-			} else if (message.type === "uploadDone") {
-				refresh();
-			} else if (message.type === "error") {
-				alert(message.error);
-			} else {
-				console.error(`Unknown message type ${message.type}`);
 			}
 		};
 		worker.addEventListener("message", handleMessage);
@@ -68,7 +81,7 @@ export function useWorkerEncryption(password: string, refresh: () => void) {
 		return () => {
 			worker.removeEventListener("message", handleMessage);
 		};
-	}, [refresh]);
+	}, []);
 
 	useEffect(() => {
 		if (worker) {

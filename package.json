@@ -12,7 +12,8 @@
 	"dependencies": {
 		"mime": "4.0.6",
 		"react": "19.0.0",
-		"react-dom": "19.0.0"
+		"react-dom": "19.0.0",
+		"typescript-event-target": "^1.1.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
