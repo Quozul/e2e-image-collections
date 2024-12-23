@@ -8,14 +8,15 @@ import { ProgressEncryption } from "../ProgressEncryption.ts";
 globalThis.onmessage = async (e) => {
 	const message: ClientMessages = e.data;
 	switch (message.type) {
-		case "setPassword":
-			handlePassword(message.password, message.jobId);
-			break;
 		case "startEncryptJob":
-			await handleEncryptionJob(message.file, message.jobId);
+			await handleEncryptionJob(message.file, message.jobId, message.password);
 			break;
 		case "startDecryptJob":
-			await handleDecryptionJob(message.fileName, message.jobId);
+			await handleDecryptionJob(
+				message.fileName,
+				message.jobId,
+				message.password,
+			);
 			break;
 		default:
 			sendError("Unhandled message received", -1);
@@ -23,22 +24,19 @@ globalThis.onmessage = async (e) => {
 	}
 };
 
-let encryption: ProgressEncryption | null = null;
-
-function handlePassword(password: string, jobId: number) {
-	sendMessage({ type: "passwordReceived", jobId });
-
-	PasswordKey.load(password)
-		.then((passwordKey) => new ProgressEncryption(passwordKey))
-		.then((blobEncryption) => {
-			encryption = blobEncryption;
-		});
+async function instantiateEncryption(
+	password: string,
+): Promise<ProgressEncryption> {
+	const passwordKey = await PasswordKey.load(password);
+	return new ProgressEncryption(passwordKey);
 }
 
-async function handleEncryptionJob(file: File, jobId: number) {
-	if (encryption === null) {
-		return sendError("Password must be set first", jobId);
-	}
+async function handleEncryptionJob(
+	file: File,
+	jobId: number,
+	password: string,
+) {
+	const encryption = await instantiateEncryption(password);
 
 	try {
 		const generator = encryption.encryptFile(file);
@@ -51,10 +49,13 @@ async function handleEncryptionJob(file: File, jobId: number) {
 	}
 }
 
-async function handleDecryptionJob(fileName: string, jobId: number) {
-	if (encryption === null) {
-		return sendError("Password must be set first", jobId);
-	}
+async function handleDecryptionJob(
+	fileName: string,
+	jobId: number,
+	password: string,
+) {
+	const encryption = await instantiateEncryption(password);
+
 	try {
 		const generator = encryption.decryptBlob(fileName);
 

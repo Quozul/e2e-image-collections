@@ -1,9 +1,5 @@
-import type {
-	ClientMessages,
-	WorkerMessages,
-} from "@/encryption/worker/messages.ts";
 import mime from "mime";
-import { useCallback, useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { DecryptionJob } from "./worker/DecryptionJob.ts";
 import { EncryptionJob } from "./worker/EncryptionJob.ts";
 import ApiEncryptionWorker from "./worker/EncryptionWorker.ts?worker";
@@ -14,23 +10,12 @@ export type FilePreview = {
 	type: string | null;
 };
 
-export function useWorkerEncryption(password: string, refresh: () => void) {
-	const [isReady, setIsReady] = useState(false);
-	const [worker, setWorker] = useState<Worker>();
+export function useWorkerEncryption(refresh: () => void) {
 	const [progress, setProgress] = useState(0);
 	const [preview, setPreview] = useState<FilePreview | null>(null);
+	const worker = useMemo(() => new ApiEncryptionWorker(), []);
 
-	const sendMessage = useCallback(
-		(message: ClientMessages) => {
-			if (!worker) {
-				throw new Error("Worker is not ready");
-			}
-			worker.postMessage(message);
-		},
-		[worker],
-	);
-
-	const encryptBlob = async (file: File): Promise<void> => {
+	const encryptBlob = async (file: File, password: string): Promise<void> => {
 		if (!worker) {
 			throw new Error("Worker is not ready");
 		}
@@ -38,7 +23,7 @@ export function useWorkerEncryption(password: string, refresh: () => void) {
 			alert("Password is required");
 			throw new Error("Password is required");
 		}
-		const job = new EncryptionJob(worker, file);
+		const job = new EncryptionJob(worker, file, password);
 		job.addEventListener("onprogress", (event) => {
 			setProgress(event.progress);
 		});
@@ -51,7 +36,10 @@ export function useWorkerEncryption(password: string, refresh: () => void) {
 		job.startJob();
 	};
 
-	const decryptBlob = async (fileName: string): Promise<void> => {
+	const decryptBlob = async (
+		fileName: string,
+		password: string,
+	): Promise<void> => {
 		if (!worker) {
 			throw new Error("Worker is not ready");
 		}
@@ -59,7 +47,7 @@ export function useWorkerEncryption(password: string, refresh: () => void) {
 			alert("Password is required");
 			throw new Error("Password is required");
 		}
-		const job = new DecryptionJob(worker, fileName);
+		const job = new DecryptionJob(worker, fileName, password);
 		job.addEventListener("onprogress", (event) => {
 			setProgress(event.progress);
 		});
@@ -72,37 +60,10 @@ export function useWorkerEncryption(password: string, refresh: () => void) {
 				blob: event.blob,
 				name: event.fileName,
 			};
-			console.log("complete");
 			setPreview(preview);
 		});
 		job.startJob();
 	};
 
-	useEffect(() => {
-		const worker = new ApiEncryptionWorker();
-		const handleMessage = (event: MessageEvent) => {
-			const message: WorkerMessages = event.data;
-			if (message.type === "passwordReceived") {
-				setIsReady(true);
-			}
-		};
-		worker.addEventListener("message", handleMessage);
-		setWorker(worker);
-
-		return () => {
-			worker.removeEventListener("message", handleMessage);
-		};
-	}, []);
-
-	useEffect(() => {
-		if (worker) {
-			sendMessage({
-				type: "setPassword",
-				password,
-				jobId: -1,
-			});
-		}
-	}, [sendMessage, worker, password]);
-
-	return { progress, encryptBlob, isReady, decryptBlob, preview, setPreview };
+	return { progress, encryptBlob, decryptBlob, preview, setPreview };
 }

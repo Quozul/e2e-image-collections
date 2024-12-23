@@ -27,6 +27,7 @@ export class EncryptionJob extends Job<EventMap> {
 	constructor(
 		private readonly _worker: Worker,
 		private readonly _file: File,
+		private readonly _password: string,
 	) {
 		super();
 	}
@@ -58,6 +59,7 @@ export class EncryptionJob extends Job<EventMap> {
 			type: "startEncryptJob",
 			file: this._file,
 			jobId: this._jobId,
+			password: this._password,
 		};
 		this._worker.postMessage(message);
 	}

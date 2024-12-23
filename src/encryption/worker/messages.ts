@@ -5,21 +5,17 @@ type WorkerMessage<T extends string> = {
 
 // Sent by the browser
 
-type setPasswordMessage = WorkerMessage<"setPassword"> & {
-	password: string;
-};
-
 type StartEncryptJobMessage = WorkerMessage<"startEncryptJob"> & {
 	file: File;
+	password: string;
 };
 
 type StartDecryptJobMessage = WorkerMessage<"startDecryptJob"> & {
 	fileName: string;
+	password: string;
 };
 
 // Sent by the worker
-
-type PasswordReceivedMessage = WorkerMessage<"passwordReceived">;
 
 type DecryptProgressMessage = WorkerMessage<"decryptProgress"> & {
 	progress: number;
@@ -40,13 +36,9 @@ type ErrorMessage = WorkerMessage<"error"> & {
 	error: unknown;
 };
 
-export type ClientMessages =
-	| setPasswordMessage
-	| StartDecryptJobMessage
-	| StartEncryptJobMessage;
+export type ClientMessages = StartDecryptJobMessage | StartEncryptJobMessage;
 
 export type WorkerMessages =
-	| PasswordReceivedMessage
 	| DecryptProgressMessage
 	| EncryptProgressMessage
 	| DecryptJobCompletedMessage

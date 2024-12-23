@@ -15,31 +15,34 @@ export function Preview({ preview }: Props) {
 
 	if (preview.type?.startsWith("image/")) {
 		return (
-			<div className="grow overflow-hidden">
-				{/* @ts-ignore */}
-				<canvas-image
-					className="block h-full"
-					src={previewUrl}
-					alt={preview.name}
-				/>
-			</div>
+			// @ts-ignore
+			<canvas-image
+				className="block h-full"
+				src={previewUrl}
+				alt={preview.name}
+				onContextMenu={() => false}
+			/>
 		);
 	}
 
 	if (preview.type?.startsWith("video/")) {
 		return (
-			<div className="grow overflow-hidden">
-				{/* biome-ignore lint/a11y/useMediaCaption: <explanation> */}
-				<video src={previewUrl} controls className="w-full h-full">
-					<source src={previewUrl} type={preview.type} />
-				</video>
-			</div>
+			// biome-ignore lint/a11y/useMediaCaption: <explanation>
+			<video src={previewUrl} controls className="w-full h-full">
+				<source src={previewUrl} type={preview.type} />
+			</video>
 		);
 	}
 
 	return (
-		<a href={previewUrl} download={preview.name}>
-			Download {preview.name}
-		</a>
+		<div className="p-2">
+			<a
+				className="underline text-blue-500"
+				href={previewUrl}
+				download={preview.name}
+			>
+				Download {preview.name}
+			</a>
+		</div>
 	);
 }
