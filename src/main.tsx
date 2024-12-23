@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import Router from "@/Router.tsx";
+import { ThemeProvider } from "@/components/theme-provider.tsx";
 import { PasswordContextProvider } from "@/contexts/PasswordContextProvider.tsx";
 import { WorkerContextProvider } from "@/contexts/WorkerContextProvider.tsx";
 import { BrowserRouter } from "react-router";
@@ -11,9 +12,11 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 	<React.StrictMode>
 		<PasswordContextProvider>
 			<WorkerContextProvider>
-				<BrowserRouter>
-					<Router />
-				</BrowserRouter>
+				<ThemeProvider defaultTheme="system" storageKey="ui-theme">
+					<BrowserRouter>
+						<Router />
+					</BrowserRouter>
+				</ThemeProvider>
 			</WorkerContextProvider>
 		</PasswordContextProvider>
 	</React.StrictMode>,

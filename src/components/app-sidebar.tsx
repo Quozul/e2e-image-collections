@@ -12,10 +12,9 @@ import {
 } from "@/components/ui/sidebar";
 import UploadFileModal from "@/components/upload-file-modal.tsx";
 
-import { usePasswordContext } from "@/contexts/usePasswordContext.ts";
+import { OpenFileButton } from "@/components/open-file-button.tsx";
+import { ThemeToggle } from "@/components/theme-toggle.tsx";
 import { useWorkerContext } from "@/contexts/useWorkerContext.ts";
-import { LoaderCircle } from "lucide-react";
-import { type HTMLProps, forwardRef, useState } from "react";
 
 export function AppSidebar() {
 	const worker = useWorkerContext();
@@ -47,42 +46,11 @@ export function AppSidebar() {
 					<SidebarMenuItem>
 						<UploadFileModal />
 					</SidebarMenuItem>
+					<SidebarMenuItem>
+						<ThemeToggle />
+					</SidebarMenuItem>
 				</SidebarMenu>
 			</SidebarFooter>
 		</Sidebar>
 	);
 }
-
-type Props = {
-	fileName: string;
-};
-
-export const OpenFileButton = forwardRef<
-	HTMLButtonElement,
-	Props & HTMLProps<HTMLButtonElement>
->(({ fileName, ...props }, ref) => {
-	const worker = useWorkerContext();
-	const { password } = usePasswordContext();
-	const [isLoading, setIsLoading] = useState<boolean>(false);
-
-	const handleClick = () => {
-		setIsLoading(true);
-		worker.decryptBlob(fileName, password).finally(() => setIsLoading(false));
-	};
-
-	return (
-		<button
-			{...props}
-			ref={ref}
-			type="button"
-			onClick={handleClick}
-			disabled={isLoading}
-		>
-			{isLoading && <LoaderCircle className="animate-spin" />}
-
-			<span className="text-ellipsis overflow-hidden whitespace-nowrap">
-				{fileName}
-			</span>
-		</button>
-	);
-});
