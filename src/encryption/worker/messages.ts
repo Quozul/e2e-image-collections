@@ -1,46 +1,54 @@
 type WorkerMessage<T extends string> = {
 	type: T;
+	jobId: number;
 };
 
 // Sent by the browser
 
-type PasswordMessage = WorkerMessage<"password"> & {
+type setPasswordMessage = WorkerMessage<"setPassword"> & {
 	password: string;
 };
 
-type EncryptBlobMessage = WorkerMessage<"encryptBlob"> & {
+type StartEncryptJobMessage = WorkerMessage<"startEncryptJob"> & {
 	file: File;
 };
 
-type DecryptBlobMessage = WorkerMessage<"decryptBlob"> & {
+type StartDecryptJobMessage = WorkerMessage<"startDecryptJob"> & {
 	fileName: string;
 };
 
 // Sent by the worker
 
-type PasswordReceived = WorkerMessage<"passwordReceived">;
+type PasswordReceivedMessage = WorkerMessage<"passwordReceived">;
 
-type ProgressMessage = WorkerMessage<"progress"> & {
+type DecryptProgressMessage = WorkerMessage<"decryptProgress"> & {
 	progress: number;
 };
 
-type DecryptedMessage = WorkerMessage<"decryptedBlob"> & {
+type EncryptProgressMessage = WorkerMessage<"encryptProgress"> & {
+	progress: number;
+};
+
+type DecryptJobCompletedMessage = WorkerMessage<"decryptComplete"> & {
 	blob: Blob;
 	fileName: string;
 };
 
-type UploadDoneMessage = WorkerMessage<"uploadDone">;
+type EncryptJobCompletedMessage = WorkerMessage<"encryptComplete">;
 
 type ErrorMessage = WorkerMessage<"error"> & {
 	error: unknown;
 };
 
-export type ApiEncryptionWorkerMessage =
-	| PasswordMessage
-	| DecryptBlobMessage
-	| EncryptBlobMessage
-	| PasswordReceived
-	| ProgressMessage
-	| DecryptedMessage
+export type ClientMessages =
+	| setPasswordMessage
+	| StartDecryptJobMessage
+	| StartEncryptJobMessage;
+
+export type WorkerMessages =
+	| PasswordReceivedMessage
+	| DecryptProgressMessage
+	| EncryptProgressMessage
+	| DecryptJobCompletedMessage
 	| ErrorMessage
-	| UploadDoneMessage;
+	| EncryptJobCompletedMessage;

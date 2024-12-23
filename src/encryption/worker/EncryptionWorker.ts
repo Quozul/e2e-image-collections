@@ -1,29 +1,32 @@
+import type {
+	ClientMessages,
+	WorkerMessages,
+} from "@/encryption/worker/messages.ts";
 import { PasswordKey } from "../PasswordKey.ts";
 import { ProgressEncryption } from "../ProgressEncryption.ts";
-import type { ApiEncryptionWorkerMessage } from "./messages.ts";
 
 globalThis.onmessage = async (e) => {
-	const message: ApiEncryptionWorkerMessage = e.data;
+	const message: ClientMessages = e.data;
 	switch (message.type) {
-		case "password":
-			handlePassword(message.password);
+		case "setPassword":
+			handlePassword(message.password, message.jobId);
 			break;
-		case "encryptBlob":
-			await handleBlob(message.file);
+		case "startEncryptJob":
+			await handleEncryptionJob(message.file, message.jobId);
 			break;
-		case "decryptBlob":
-			await handleDecrypt(message.fileName);
+		case "startDecryptJob":
+			await handleDecryptionJob(message.fileName, message.jobId);
 			break;
 		default:
-			sendError(`Unknown message type ${message.type}`);
+			sendError("Unhandled message received", -1);
 			break;
 	}
 };
 
 let encryption: ProgressEncryption | null = null;
 
-function handlePassword(password: string) {
-	sendMessage({ type: "passwordReceived" });
+function handlePassword(password: string, jobId: number) {
+	sendMessage({ type: "passwordReceived", jobId });
 
 	PasswordKey.load(password)
 		.then((passwordKey) => new ProgressEncryption(passwordKey))
@@ -32,25 +35,25 @@ function handlePassword(password: string) {
 		});
 }
 
-async function handleBlob(file: File) {
+async function handleEncryptionJob(file: File, jobId: number) {
 	if (encryption === null) {
-		return sendError("Password must be set first");
+		return sendError("Password must be set first", jobId);
 	}
 
 	try {
 		const generator = encryption.encryptFile(file);
 		for await (const progress of generator) {
-			sendMessage({ type: "progress", progress });
+			sendMessage({ type: "encryptProgress", progress, jobId });
 		}
-		sendMessage({ type: "uploadDone" });
+		sendMessage({ type: "encryptComplete", jobId });
 	} catch (error) {
-		sendError(error);
+		sendError(error, jobId);
 	}
 }
 
-async function handleDecrypt(fileName: string) {
+async function handleDecryptionJob(fileName: string, jobId: number) {
 	if (encryption === null) {
-		return sendError("Password must be set first");
+		return sendError("Password must be set first", jobId);
 	}
 	try {
 		const generator = encryption.decryptBlob(fileName);
@@ -59,20 +62,25 @@ async function handleDecrypt(fileName: string) {
 		// biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
 		while (!(result = await generator.next()).done) {
 			if (typeof result.value === "number") {
-				sendMessage({ type: "progress", progress: result.value });
+				sendMessage({ type: "decryptProgress", progress: result.value, jobId });
 			}
 		}
-		sendMessage({ type: "decryptedBlob", blob: result.value, fileName });
+		sendMessage({
+			type: "decryptComplete",
+			blob: result.value,
+			fileName,
+			jobId,
+		});
 	} catch (error) {
-		sendError(error);
+		sendError(error, jobId);
 	}
 }
 
-function sendMessage(message: ApiEncryptionWorkerMessage) {
+function sendMessage(message: WorkerMessages) {
 	globalThis.postMessage(message);
 }
 
-function sendError(error: unknown) {
+function sendError(error: unknown, jobId: number) {
 	console.error(error);
-	sendMessage({ type: "error", error });
+	sendMessage({ type: "error", error, jobId });
 }

@@ -1,5 +1,5 @@
-import { TypedEventTarget } from "typescript-event-target";
-import type { ApiEncryptionWorkerMessage } from "./messages.ts";
+import { Job } from "@/encryption/worker/Job.ts";
+import type { ClientMessages, WorkerMessages } from "./messages.ts";
 
 export class EncryptionJobProgressEvent extends Event {
 	constructor(readonly progress: number) {
@@ -23,10 +23,7 @@ type EventMap = {
 	onerror: EncryptionJobErrorEvent;
 };
 
-export class EncryptionJob
-	extends TypedEventTarget<EventMap>
-	implements Disposable
-{
+export class EncryptionJob extends Job<EventMap> {
 	constructor(
 		private readonly _worker: Worker,
 		private readonly _file: File,
@@ -35,18 +32,17 @@ export class EncryptionJob
 	}
 
 	public startJob() {
-		this._worker.postMessage({
-			type: "encryptBlob",
-			file: this._file,
-		});
 		this._worker.addEventListener("message", (event: MessageEvent) => {
-			const message: ApiEncryptionWorkerMessage = event.data;
-			if (message.type === "progress") {
+			const message: WorkerMessages = event.data;
+			if (message.jobId !== this._jobId) {
+				return;
+			}
+			if (message.type === "encryptProgress") {
 				this.dispatchTypedEvent(
 					"onprogress",
 					new EncryptionJobProgressEvent(message.progress),
 				);
-			} else if (message.type === "uploadDone") {
+			} else if (message.type === "encryptComplete") {
 				this.dispatchTypedEvent("oncomplete", new EncryptionJobCompleteEvent());
 			} else if (message.type === "error") {
 				this.dispatchTypedEvent(
@@ -57,9 +53,12 @@ export class EncryptionJob
 				console.error(`Unknown message type ${message.type}`);
 			}
 		});
-	}
 
-	[Symbol.dispose]() {
-		console.log("EncryptionJob disposed");
+		const message: ClientMessages = {
+			type: "startEncryptJob",
+			file: this._file,
+			jobId: this._jobId,
+		};
+		this._worker.postMessage(message);
 	}
 }

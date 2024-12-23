@@ -1,9 +1,12 @@
+import type {
+	ClientMessages,
+	WorkerMessages,
+} from "@/encryption/worker/messages.ts";
 import mime from "mime";
 import { useCallback, useEffect, useState } from "react";
 import { DecryptionJob } from "./worker/DecryptionJob.ts";
 import { EncryptionJob } from "./worker/EncryptionJob.ts";
 import ApiEncryptionWorker from "./worker/EncryptionWorker.ts?worker";
-import type { ApiEncryptionWorkerMessage } from "./worker/messages.ts";
 
 export type FilePreview = {
 	blob: Blob;
@@ -18,7 +21,7 @@ export function useWorkerEncryption(password: string, refresh: () => void) {
 	const [preview, setPreview] = useState<FilePreview | null>(null);
 
 	const sendMessage = useCallback(
-		(message: ApiEncryptionWorkerMessage) => {
+		(message: ClientMessages) => {
 			if (!worker) {
 				throw new Error("Worker is not ready");
 			}
@@ -69,6 +72,7 @@ export function useWorkerEncryption(password: string, refresh: () => void) {
 				blob: event.blob,
 				name: event.fileName,
 			};
+			console.log("complete");
 			setPreview(preview);
 		});
 		job.startJob();
@@ -77,7 +81,7 @@ export function useWorkerEncryption(password: string, refresh: () => void) {
 	useEffect(() => {
 		const worker = new ApiEncryptionWorker();
 		const handleMessage = (event: MessageEvent) => {
-			const message: ApiEncryptionWorkerMessage = event.data;
+			const message: WorkerMessages = event.data;
 			if (message.type === "passwordReceived") {
 				setIsReady(true);
 			}
@@ -93,8 +97,9 @@ export function useWorkerEncryption(password: string, refresh: () => void) {
 	useEffect(() => {
 		if (worker) {
 			sendMessage({
-				type: "password",
+				type: "setPassword",
 				password,
+				jobId: -1,
 			});
 		}
 	}, [sendMessage, worker, password]);

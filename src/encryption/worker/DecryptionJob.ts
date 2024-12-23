@@ -1,5 +1,5 @@
-import { TypedEventTarget } from "typescript-event-target";
-import type { ApiEncryptionWorkerMessage } from "./messages.ts";
+import { Job } from "@/encryption/worker/Job.ts";
+import type { ClientMessages, WorkerMessages } from "./messages.ts";
 
 export class DecryptionJobProgressEvent extends Event {
 	constructor(readonly progress: number) {
@@ -26,7 +26,7 @@ type EventMap = {
 	onerror: DecryptionJobErrorEvent;
 };
 
-export class DecryptionJob extends TypedEventTarget<EventMap> {
+export class DecryptionJob extends Job<EventMap> {
 	constructor(
 		private readonly _worker: Worker,
 		private readonly _fileName: string,
@@ -35,18 +35,14 @@ export class DecryptionJob extends TypedEventTarget<EventMap> {
 	}
 
 	public startJob() {
-		this._worker.postMessage({
-			type: "decryptBlob",
-			fileName: this._fileName,
-		});
 		this._worker.addEventListener("message", (event: MessageEvent) => {
-			const message: ApiEncryptionWorkerMessage = event.data;
-			if (message.type === "progress") {
+			const message: WorkerMessages = event.data;
+			if (message.type === "decryptProgress") {
 				this.dispatchTypedEvent(
 					"onprogress",
 					new DecryptionJobProgressEvent(message.progress),
 				);
-			} else if (message.type === "decryptedBlob") {
+			} else if (message.type === "decryptComplete") {
 				this.dispatchTypedEvent(
 					"oncomplete",
 					new DecryptionJobCompleteEvent(message.blob, message.fileName),
@@ -60,5 +56,12 @@ export class DecryptionJob extends TypedEventTarget<EventMap> {
 				console.error(`Unknown message type ${message.type}`);
 			}
 		});
+
+		const message: ClientMessages = {
+			type: "startDecryptJob",
+			fileName: this._fileName,
+			jobId: this._jobId,
+		};
+		this._worker.postMessage(message);
 	}
 }
