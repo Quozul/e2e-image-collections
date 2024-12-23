@@ -31,6 +31,10 @@ export function useWorkerEncryption(password: string, refresh: () => void) {
 		if (!worker) {
 			throw new Error("Worker is not ready");
 		}
+		if (!password) {
+			alert("Password is required");
+			throw new Error("Password is required");
+		}
 		const job = new EncryptionJob(worker, file);
 		job.addEventListener("onprogress", (event) => {
 			setProgress(event.progress);
@@ -48,7 +52,10 @@ export function useWorkerEncryption(password: string, refresh: () => void) {
 		if (!worker) {
 			throw new Error("Worker is not ready");
 		}
-
+		if (!password) {
+			alert("Password is required");
+			throw new Error("Password is required");
+		}
 		const job = new DecryptionJob(worker, fileName);
 		job.addEventListener("onprogress", (event) => {
 			setProgress(event.progress);

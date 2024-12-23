@@ -4,7 +4,7 @@ import { useWorkerEncryption } from "./encryption/useWorkerEncryption.ts";
 import { useList } from "./hooks/useList.ts";
 
 export function App() {
-	const [password, setPassword] = useState("password");
+	const [password, setPassword] = useState("");
 	const { data: files, refresh } = useList();
 	const { encryptBlob, progress, isReady, decryptBlob, preview, setPreview } =
 		useWorkerEncryption(password, refresh);

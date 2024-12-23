@@ -6,19 +6,23 @@ mod range;
 use crate::handlers::delete_file::delete_file;
 use crate::handlers::get_file::get_file;
 use axum::extract::DefaultBodyLimit;
-use axum::http::Method;
+use axum::http::header::{CONTENT_RANGE, CONTENT_TYPE, RANGE};
+use axum::http::{HeaderValue, Method};
 use axum::routing::get;
 use axum::Router;
 use handlers::get_files::get_files;
 use handlers::head_file::head_file;
 use handlers::post_file::post_file;
-use tower_http::cors::{Any, CorsLayer};
+use tokio::signal;
+use tower_http::cors::CorsLayer;
 use tower_http::limit::RequestBodyLimitLayer;
+use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 const UPLOADS_DIRECTORY: &str = "uploads";
+const STATIC_DIRECTORY: &str = "static";
 const UPLOAD_SIZE_LIMIT: usize = 16_777_216; /* 16 MiB */
 
 #[tokio::main]
@@ -42,27 +46,56 @@ async fn main() {
             .expect("failed to create `uploads` directory");
     }
 
-    let cors = CorsLayer::new()
+    let cors_layer = CorsLayer::new()
         .allow_methods([Method::GET, Method::POST, Method::HEAD, Method::DELETE])
-        .allow_headers(Any)
-        .allow_origin(Any);
+        .allow_headers([CONTENT_RANGE, RANGE, CONTENT_TYPE])
+        .allow_origin("http://localhost:5173".parse::<HeaderValue>().unwrap());
+
+    let api_router = Router::new().route("/file", get(get_files)).route(
+        "/file/{filename}",
+        get(get_file)
+            .head(head_file)
+            .post(post_file)
+            .delete(delete_file),
+    );
 
     let app = Router::new()
-        .route("/file", get(get_files))
-        .route(
-            "/file/{filename}",
-            get(get_file)
-                .head(head_file)
-                .post(post_file)
-                .delete(delete_file),
-        )
+        .nest("/api", api_router)
+        .fallback_service(ServeDir::new(STATIC_DIRECTORY))
         .layer(DefaultBodyLimit::disable())
         .layer(TraceLayer::new_for_http())
         .layer(RequestBodyLimitLayer::new(UPLOAD_SIZE_LIMIT))
-        .layer(cors);
+        .layer(cors_layer);
 
     // run it
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     info!("listening on {}", listener.local_addr().unwrap());
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
+        .await
+        .unwrap();
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
+    }
 }

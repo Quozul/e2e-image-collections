@@ -5,9 +5,9 @@ edition = "2021"
 
 [dependencies]
 axum = { version = "0.8.0-rc.1", features = ["multipart"] }
-tokio = { version = "1.42.0", features = ["rt-multi-thread", "io-util"] }
+tokio = { version = "1.42.0", features = ["rt-multi-thread", "io-util", "signal"] }
 tokio-stream = { version = "0.1.17", features = ["fs"] }
-tower-http = { version = "0.6.2", features = ["cors", "limit", "trace"] }
+tower-http = { version = "0.6.2", features = ["cors", "limit", "trace", "fs"] }
 futures = "0.3.31"
 tokio-util = { version = "0.7", features = ["io"] }
 tracing = "0.1.41"
