@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { DialogClose } from "@/components/ui/dialog.tsx";
 import {
 	Form,
 	FormControl,
@@ -10,7 +9,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useWorkerContext } from "@/contexts/useWorkerContext.ts";
+import { usePasswordContext } from "@/contexts/usePasswordContext.ts";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoaderCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -18,23 +17,29 @@ import { z } from "zod";
 
 const formSchema = z.object({
 	password: z.string().min(2, {
-		message: "Title must be at least 2 characters.",
+		message: "Password must be at least 2 characters.",
 	}),
 });
 
 export default function PasswordForm() {
-	const worker = useWorkerContext();
+	const { setPassword, password, setIsPasswordModalOpen } =
+		usePasswordContext();
 
 	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
-			password: worker.password,
+			password: password,
 		},
 	});
 
 	async function onSubmit(values: z.infer<typeof formSchema>) {
-		if (worker.password !== values.password) {
-			worker.setPassword(values.password);
+		if (password !== values.password) {
+			setPassword(values.password);
+			setIsPasswordModalOpen(false);
+		} else {
+			form.setError("password", {
+				message: "Password must be different than the previous one.",
+			});
 		}
 	}
 
@@ -63,14 +68,12 @@ export default function PasswordForm() {
 					)}
 				/>
 
-				<DialogClose asChild>
-					<Button type="submit" disabled={form.formState.isSubmitting}>
-						{form.formState.isSubmitting && (
-							<LoaderCircle className="animate-spin" />
-						)}
-						Upload
-					</Button>
-				</DialogClose>
+				<Button type="submit" disabled={form.formState.isSubmitting}>
+					{form.formState.isSubmitting && (
+						<LoaderCircle className="animate-spin" />
+					)}
+					Set password
+				</Button>
 			</form>
 		</Form>
 	);

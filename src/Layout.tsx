@@ -2,6 +2,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { Button } from "@/components/ui/button.tsx";
 import { Separator } from "@/components/ui/separator.tsx";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Toaster } from "@/components/ui/sonner.tsx";
 import { useWorkerContext } from "@/contexts/useWorkerContext.ts";
 import { useDeleteCurrentPreview } from "@/hooks/useDeleteCurrentPreview.ts";
 import { LoaderCircle } from "lucide-react";
@@ -40,6 +41,7 @@ export default function Layout() {
 				</header>
 				<Outlet />
 			</main>
+			<Toaster />
 		</SidebarProvider>
 	);
 }

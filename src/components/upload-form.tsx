@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { DialogClose } from "@/components/ui/dialog.tsx";
 import {
 	Form,
 	FormControl,
@@ -10,6 +9,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { usePasswordContext } from "@/contexts/usePasswordContext.ts";
 import { useWorkerContext } from "@/contexts/useWorkerContext.ts";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoaderCircle } from "lucide-react";
@@ -18,20 +18,25 @@ import { z } from "zod";
 
 const formSchema = z.object({
 	password: z.string().min(2, {
-		message: "Title must be at least 2 characters.",
+		message: "Password must be at least 2 characters.",
 	}),
 	file: z
 		.instanceof(FileList)
 		.refine((file) => file?.length === 1, "Exactly one file must be selected."),
 });
 
-export default function UploadForm() {
+type Props = {
+	setOpen: (open: boolean) => void;
+};
+
+export default function UploadForm({ setOpen }: Props) {
 	const worker = useWorkerContext();
+	const { password, setPassword } = usePasswordContext();
 
 	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
-			password: worker.password,
+			password: password,
 			file: undefined,
 		},
 	});
@@ -39,13 +44,15 @@ export default function UploadForm() {
 	const fileRef = form.register("file");
 
 	async function onSubmit(values: z.infer<typeof formSchema>) {
-		if (worker.password !== values.password) {
-			worker.setPassword(values.password);
+		if (password !== values.password) {
+			setPassword(values.password);
 		}
 
 		for (const file of values.file) {
 			await worker.encryptBlob(file, values.password);
 		}
+
+		setOpen(false);
 	}
 
 	return (
@@ -90,14 +97,12 @@ export default function UploadForm() {
 					)}
 				/>
 
-				<DialogClose asChild>
-					<Button type="submit" disabled={form.formState.isSubmitting}>
-						{form.formState.isSubmitting && (
-							<LoaderCircle className="animate-spin" />
-						)}
-						Upload
-					</Button>
-				</DialogClose>
+				<Button type="submit" disabled={form.formState.isSubmitting}>
+					{form.formState.isSubmitting && (
+						<LoaderCircle className="animate-spin" />
+					)}
+					Upload
+				</Button>
 			</form>
 		</Form>
 	);

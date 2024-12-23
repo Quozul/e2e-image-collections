@@ -9,16 +9,19 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { SidebarMenuButton } from "@/components/ui/sidebar.tsx";
+import { usePasswordContext } from "@/contexts/usePasswordContext.ts";
 
 export default function SetPasswordModal() {
+	const { isPasswordModalOpen, setIsPasswordModalOpen } = usePasswordContext();
+
 	return (
-		<Dialog>
+		<Dialog open={isPasswordModalOpen} onOpenChange={setIsPasswordModalOpen}>
 			<SidebarMenuButton asChild>
-				<DialogTrigger>Change password</DialogTrigger>
+				<DialogTrigger>Change decryption password</DialogTrigger>
 			</SidebarMenuButton>
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle>Change password</DialogTitle>
+					<DialogTitle>Change decryption password</DialogTitle>
 					<DialogDescription>
 						Use this form if you would like to set the decryption password.
 					</DialogDescription>

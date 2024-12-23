@@ -4,22 +4,16 @@ import {
 } from "@/contexts/WorkerContext.ts";
 import { useWorkerEncryption } from "@/encryption/useWorkerEncryption.ts";
 import { useList } from "@/hooks/useList.ts";
-import { type PropsWithChildren, useState } from "react";
+import type { PropsWithChildren } from "react";
 
 export function WorkerContextProvider({ children }: PropsWithChildren) {
 	const { data, refresh } = useList();
-	const [password, setPassword] = useState("");
-	const { encryptBlob, decryptBlob, preview, setPreview } =
-		useWorkerEncryption(refresh);
+
+	const worker = useWorkerEncryption(refresh);
 
 	const value: WorkerContextType = {
-		setPassword,
-		encryptBlob,
-		decryptBlob,
-		preview,
-		setPreview,
+		...worker,
 		fileList: data,
-		password,
 		refresh,
 	};
 

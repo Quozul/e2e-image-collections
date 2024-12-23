@@ -9,10 +9,13 @@ import {
 } from "@/components/ui/dialog";
 import { SidebarMenuButton } from "@/components/ui/sidebar.tsx";
 import UploadForm from "@/components/upload-form.tsx";
+import { useState } from "react";
 
 export default function UploadFileModal() {
+	const [open, setOpen] = useState(false);
+
 	return (
-		<Dialog>
+		<Dialog open={open} onOpenChange={setOpen}>
 			<SidebarMenuButton asChild>
 				<DialogTrigger>Upload file</DialogTrigger>
 			</SidebarMenuButton>
@@ -23,7 +26,7 @@ export default function UploadFileModal() {
 						This form allows you to upload a file.
 					</DialogDescription>
 				</DialogHeader>
-				<UploadForm />
+				<UploadForm setOpen={setOpen} />
 				<DialogFooter className="sm:justify-start">
 					<DialogDescription>
 						The file will be encrypted on your device.
