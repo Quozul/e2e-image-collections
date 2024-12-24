@@ -1,11 +1,13 @@
-import { AsyncBlob } from "./AsyncBlob.ts";
+import { AsyncArrayBuffer, AsyncBlob } from "./AsyncBlob.ts";
 import { Encryption } from "./Encryption.ts";
 
-export class BlobEncryption extends Encryption {
-	public async encryptBlob(input: Blob): Promise<Blob> {
+export class StringEncryption extends Encryption {
+	public async encryptString(input: string): Promise<string> {
 		const blobParts: BlobPart[] = [];
+		const encoder = new TextEncoder();
+		const encodedText = encoder.encode(input);
 
-		const asyncBlob = new AsyncBlob(input);
+		const asyncBlob = new AsyncArrayBuffer(encodedText.buffer);
 		for await (const encryptedArrayBuffer of this.encrypt(asyncBlob)) {
 			blobParts.push(encryptedArrayBuffer);
 		}
