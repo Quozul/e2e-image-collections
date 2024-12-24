@@ -1,6 +1,6 @@
 import { usePasswordContext } from "@/contexts/usePasswordContext.ts";
 import mime from "mime";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { DecryptionJob } from "./worker/DecryptionJob.ts";
 import { EncryptionJob } from "./worker/EncryptionJob.ts";
@@ -16,16 +16,15 @@ export type FilePreview = {
 export function useWorkerEncryption(refresh: () => void) {
 	const [preview, setPreview] = useState<FilePreview | null>(null);
 	const worker = useMemo(() => new ApiEncryptionWorker(), []);
-	const { requestNewPassword } = usePasswordContext();
+	const { setIsPasswordModalOpen } = usePasswordContext();
 
-	const encryptBlob = async (file: File, password: string): Promise<void> => {
-		return new Promise((resolve, reject) => {
+	const encryptBlob = useCallback(
+		(file: File, password: string): EncryptionJob => {
 			const job = new EncryptionJob(worker, file);
 			job.addEventListener(
 				"onerror",
 				() => {
-					requestNewPassword((newPassword) => encryptBlob(file, newPassword));
-					reject();
+					toast(`Could not encrypt "${file.name}".`);
 				},
 				{ once: true },
 			);
@@ -33,28 +32,24 @@ export function useWorkerEncryption(refresh: () => void) {
 				"oncomplete",
 				() => {
 					refresh();
-					toast(`File "${file.name}" has been uploaded.`);
-					resolve();
+					toast(`"${file.name}" has been uploaded.`);
 				},
 				{ once: true },
 			);
 			job.startJob(password);
-		});
-	};
+			return job;
+		},
+		[worker, refresh],
+	);
 
-	const decryptBlob = async (
-		encryptedFileName: string,
-		password: string,
-	): Promise<void> => {
-		return new Promise((resolve, reject) => {
+	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+	const decryptBlob = useCallback(
+		(encryptedFileName: string, password: string): DecryptionJob => {
 			const job = new DecryptionJob(worker, encryptedFileName);
 			job.addEventListener(
 				"onerror",
 				() => {
-					requestNewPassword((newPassword) =>
-						decryptBlob(encryptedFileName, newPassword),
-					);
-					reject();
+					setIsPasswordModalOpen(true);
 				},
 				{ once: true },
 			);
@@ -68,13 +63,14 @@ export function useWorkerEncryption(refresh: () => void) {
 						decryptedName: event.fileName,
 					};
 					setPreview(preview);
-					resolve();
 				},
 				{ once: true },
 			);
 			job.startJob(password);
-		});
-	};
+			return job;
+		},
+		[worker],
+	);
 
 	return { encryptBlob, decryptBlob, preview, setPreview };
 }

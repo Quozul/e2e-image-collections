@@ -1,13 +1,10 @@
-import { createContext } from "react";
-
-export type NewPasswordCallback = (newPassword: string) => void;
+import { type Dispatch, type SetStateAction, createContext } from "react";
 
 export type PasswordContextType = {
 	password: string;
-	setPassword: (newPassword: string) => void;
+	setPassword: Dispatch<SetStateAction<string>>;
 	isPasswordModalOpen: boolean;
-	setIsPasswordModalOpen: (isOpen: boolean) => void;
-	requestNewPassword: (callback: NewPasswordCallback) => void;
+	setIsPasswordModalOpen: Dispatch<SetStateAction<boolean>>;
 };
 
 const Noop = () => void 0;
@@ -17,7 +14,6 @@ const defaultValue: PasswordContextType = {
 	password: "",
 	isPasswordModalOpen: false,
 	setIsPasswordModalOpen: Noop,
-	requestNewPassword: Noop,
 };
 
 export const PasswordContext = createContext(defaultValue);

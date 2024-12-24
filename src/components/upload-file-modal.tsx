@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { SidebarMenuButton } from "@/components/ui/sidebar.tsx";
 import UploadForm from "@/components/upload-form.tsx";
+import { Upload } from "lucide-react";
 import { useState } from "react";
 
 export default function UploadFileModal() {
@@ -17,7 +18,9 @@ export default function UploadFileModal() {
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<SidebarMenuButton asChild>
-				<DialogTrigger>Upload file</DialogTrigger>
+				<DialogTrigger>
+					<Upload /> Upload file
+				</DialogTrigger>
 			</SidebarMenuButton>
 			<DialogContent>
 				<DialogHeader>

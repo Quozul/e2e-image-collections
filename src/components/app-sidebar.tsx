@@ -1,4 +1,6 @@
+import { OpenFileButton } from "@/components/open-file-button.tsx";
 import SetPasswordModal from "@/components/set-password-modal.tsx";
+import { ThemeToggle } from "@/components/theme-toggle.tsx";
 import {
 	Sidebar,
 	SidebarContent,
@@ -11,10 +13,9 @@ import {
 	SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import UploadFileModal from "@/components/upload-file-modal.tsx";
-
-import { OpenFileButton } from "@/components/open-file-button.tsx";
-import { ThemeToggle } from "@/components/theme-toggle.tsx";
 import { useWorkerContext } from "@/contexts/useWorkerContext.ts";
+import { Home } from "lucide-react";
+import { Link } from "react-router";
 
 export function AppSidebar() {
 	const { fileList } = useWorkerContext();
@@ -23,10 +24,26 @@ export function AppSidebar() {
 		<Sidebar>
 			<SidebarContent>
 				<SidebarGroup>
+					<SidebarGroupLabel>Application</SidebarGroupLabel>
+					<SidebarGroupContent>
+						<SidebarMenu>
+							<SidebarMenuItem>
+								<SidebarMenuButton asChild>
+									<Link to="/" type="button">
+										<Home />
+										Home
+									</Link>
+								</SidebarMenuButton>
+							</SidebarMenuItem>
+						</SidebarMenu>
+					</SidebarGroupContent>
+				</SidebarGroup>
+
+				<SidebarGroup>
 					<SidebarGroupLabel>Files</SidebarGroupLabel>
 					<SidebarGroupContent>
 						<SidebarMenu>
-							{fileList.sort().map((item) => (
+							{fileList.map((item) => (
 								<SidebarMenuItem key={item.encryptedName}>
 									<SidebarMenuButton asChild>
 										<OpenFileButton item={item} />
