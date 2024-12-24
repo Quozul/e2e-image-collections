@@ -11,7 +11,7 @@ type StartEncryptJobMessage = WorkerMessage<"startEncryptJob"> & {
 };
 
 type StartDecryptJobMessage = WorkerMessage<"startDecryptJob"> & {
-	fileName: string;
+	encryptedFileName: string;
 	password: string;
 };
 

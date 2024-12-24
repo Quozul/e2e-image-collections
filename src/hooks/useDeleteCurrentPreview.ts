@@ -11,7 +11,7 @@ export function useDeleteCurrentPreview() {
 		}
 		setIsLoading(true);
 		await fetch(
-			`${import.meta.env.VITE_API_BASE_URL}/file/${worker.preview.name}`,
+			`${import.meta.env.VITE_API_BASE_URL}/file/${worker.preview.encryptedName}`,
 			{
 				method: "DELETE",
 				mode: "cors",
@@ -27,5 +27,6 @@ export function useDeleteCurrentPreview() {
 	return {
 		handleDelete,
 		isLoading,
+		decryptedName: worker.preview?.decryptedName,
 	};
 }

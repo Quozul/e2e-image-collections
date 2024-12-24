@@ -1,10 +1,11 @@
 import type { FilePreview } from "@/encryption/useWorkerEncryption.ts";
+import type { ListItem } from "@/hooks/useList.ts";
 import { createContext } from "react";
 
 export type WorkerContextType = {
 	setPreview: (preview: FilePreview | null) => void;
 	preview: FilePreview | null;
-	fileList: string[];
+	fileList: ListItem[];
 	encryptBlob: (blob: File, password: string) => Promise<void>;
 	decryptBlob: (fileName: string, password: string) => Promise<void>;
 	refresh: () => void;

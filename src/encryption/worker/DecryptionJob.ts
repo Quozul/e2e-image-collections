@@ -23,7 +23,7 @@ type EventMap = {
 export class DecryptionJob extends Job<EventMap> {
 	constructor(
 		private readonly _worker: Worker,
-		private readonly _fileName: string,
+		private readonly _encryptedFileName: string,
 	) {
 		super();
 	}
@@ -33,7 +33,7 @@ export class DecryptionJob extends Job<EventMap> {
 
 		const message: ClientMessages = {
 			type: "startDecryptJob",
-			fileName: this._fileName,
+			encryptedFileName: this._encryptedFileName,
 			jobId: this._jobId,
 			password,
 		};

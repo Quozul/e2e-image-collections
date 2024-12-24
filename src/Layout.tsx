@@ -31,7 +31,7 @@ export default function Layout() {
 					<div className="flex justify-between w-full items-center">
 						{worker.preview !== null && (
 							<div className="text-ellipsis overflow-hidden whitespace-nowrap">
-								{worker.preview.name}
+								{worker.preview.decryptedName}
 							</div>
 						)}
 

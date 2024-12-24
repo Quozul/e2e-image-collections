@@ -3,7 +3,10 @@ import { Encryption, SLICE_SIZE } from "./Encryption.ts";
 import { NetworkBlob } from "./NetworkBlob.ts";
 
 export class ProgressEncryption extends Encryption {
-	public async *encryptFile(input: File): AsyncGenerator<number> {
+	public async *encryptFile(
+		input: Blob,
+		fileName: string,
+	): AsyncGenerator<number> {
 		const asyncBlob = new AsyncBlob(input);
 
 		let chunk = 0;
@@ -13,7 +16,7 @@ export class ProgressEncryption extends Encryption {
 		for await (const encryptedArrayBuffer of this.encrypt(asyncBlob)) {
 			const rangeStart = writtenBytes;
 			const rangeEnd = rangeStart + encryptedArrayBuffer.byteLength;
-			await fetch(`${import.meta.env.VITE_API_BASE_URL}/file/${input.name}`, {
+			await fetch(`${import.meta.env.VITE_API_BASE_URL}/file/${fileName}`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/octet-stream",

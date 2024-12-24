@@ -1,3 +1,4 @@
+import { StringEncryption } from "@/encryption/StringEncryption.ts";
 import type {
 	ClientMessages,
 	WorkerMessages,
@@ -13,7 +14,7 @@ globalThis.onmessage = async (e) => {
 			break;
 		case "startDecryptJob":
 			await handleDecryptionJob(
-				message.fileName,
+				message.encryptedFileName,
 				message.jobId,
 				message.password,
 			);
@@ -31,6 +32,16 @@ async function instantiateEncryption(
 	return new ProgressEncryption(passwordKey);
 }
 
+async function encryptString(password: string, input: string): Promise<string> {
+	const passwordKey = await PasswordKey.load(password);
+	return new StringEncryption(passwordKey).encryptString(input);
+}
+
+async function decryptString(password: string, input: string): Promise<string> {
+	const passwordKey = await PasswordKey.load(password);
+	return new StringEncryption(passwordKey).decryptString(input);
+}
+
 async function handleEncryptionJob(
 	file: File,
 	jobId: number,
@@ -39,7 +50,8 @@ async function handleEncryptionJob(
 	const encryption = await instantiateEncryption(password);
 
 	try {
-		const generator = encryption.encryptFile(file);
+		const fileName = await encryptString(password, file.name);
+		const generator = encryption.encryptFile(file, fileName);
 		for await (const progress of generator) {
 			sendMessage({ type: "encryptProgress", progress, jobId });
 		}
@@ -50,14 +62,15 @@ async function handleEncryptionJob(
 }
 
 async function handleDecryptionJob(
-	fileName: string,
+	encryptedFileName: string,
 	jobId: number,
 	password: string,
 ) {
 	const encryption = await instantiateEncryption(password);
 
 	try {
-		const generator = encryption.decryptBlob(fileName);
+		const decryptedFileName = await decryptString(password, encryptedFileName);
+		const generator = encryption.decryptBlob(encryptedFileName);
 
 		let result: IteratorResult<number | Blob>;
 		// biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
@@ -66,10 +79,11 @@ async function handleDecryptionJob(
 				sendMessage({ type: "decryptProgress", progress: result.value, jobId });
 			}
 		}
+
 		sendMessage({
 			type: "decryptComplete",
 			blob: result.value,
-			fileName,
+			fileName: decryptedFileName,
 			jobId,
 		});
 	} catch (error) {

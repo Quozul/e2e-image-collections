@@ -74,6 +74,16 @@ export class Encryption {
 		return this.arrayBufferToHex(hash);
 	}
 
+	protected mergeArrayBuffers(
+		buffer1: ArrayBuffer,
+		buffer2: ArrayBuffer,
+	): ArrayBuffer {
+		const merged = new Uint8Array(buffer1.byteLength + buffer2.byteLength);
+		merged.set(new Uint8Array(buffer1), 0);
+		merged.set(new Uint8Array(buffer2), buffer1.byteLength);
+		return merged.buffer;
+	}
+
 	private generateIv(ivSize: number = IV_SIZE) {
 		const iv = new Uint8Array(ivSize);
 		crypto.getRandomValues(iv);
@@ -89,16 +99,6 @@ export class Encryption {
 			const end = Math.min(i + chunkSize, blob.size);
 			yield await blob.slice(i, end);
 		}
-	}
-
-	private mergeArrayBuffers(
-		buffer1: ArrayBuffer,
-		buffer2: ArrayBuffer,
-	): ArrayBuffer {
-		const merged = new Uint8Array(buffer1.byteLength + buffer2.byteLength);
-		merged.set(new Uint8Array(buffer1), 0);
-		merged.set(new Uint8Array(buffer2), buffer1.byteLength);
-		return merged.buffer;
 	}
 
 	private arrayBufferToHex(buffer: ArrayBuffer): string {

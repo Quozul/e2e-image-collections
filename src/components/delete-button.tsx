@@ -10,7 +10,6 @@ import {
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-import { Button } from "@/components/ui/button.tsx";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu.tsx";
 import { useDeleteCurrentPreview } from "@/hooks/useDeleteCurrentPreview.ts";
 import { LoaderCircle, Trash } from "lucide-react";
@@ -21,11 +20,9 @@ export function DeleteButton() {
 	return (
 		<AlertDialog>
 			<AlertDialogTrigger asChild>
-				<DropdownMenuItem onSelect={(e) => e.preventDefault()} asChild>
-					<Button variant="destructive" className="w-full justify-start">
-						<Trash />
-						Delete
-					</Button>
+				<DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+					<Trash />
+					Delete
 				</DropdownMenuItem>
 			</AlertDialogTrigger>
 
@@ -33,7 +30,13 @@ export function DeleteButton() {
 				<AlertDialogHeader>
 					<AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
 					<AlertDialogDescription>
-						This action cannot be undone. This will permanently delete the file
+						You are about to delete the following file:
+						<ul className="my-5">
+							<li className="break-all">
+								"{deleteCurrentPreview.decryptedName}"
+							</li>
+						</ul>
+						This action cannot be undone and will permanently delete the file
 						from our servers.
 					</AlertDialogDescription>
 				</AlertDialogHeader>

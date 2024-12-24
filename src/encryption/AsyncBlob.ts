@@ -1,5 +1,5 @@
 export interface Slice {
-	slice: (start: number, end: number) => Promise<ArrayBufferLike>;
+	slice: (start: number, end: number) => Promise<ArrayBuffer>;
 	size: number;
 }
 
@@ -16,9 +16,9 @@ export class AsyncBlob implements Slice {
 }
 
 export class AsyncArrayBuffer implements Slice {
-	public constructor(private readonly _arrayBuffer: ArrayBufferLike) {}
+	public constructor(private readonly _arrayBuffer: ArrayBuffer) {}
 
-	public async slice(start: number, end: number): Promise<ArrayBufferLike> {
+	public async slice(start: number, end: number): Promise<ArrayBuffer> {
 		return this._arrayBuffer.slice(start, end);
 	}
 

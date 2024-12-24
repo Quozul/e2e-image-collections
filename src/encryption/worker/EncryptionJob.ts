@@ -20,7 +20,7 @@ type EventMap = {
 export class EncryptionJob extends Job<EventMap> {
 	constructor(
 		private readonly _worker: Worker,
-		private readonly _file: File,
+		private readonly _file: Blob,
 	) {
 		super();
 	}

@@ -8,7 +8,8 @@ import ApiEncryptionWorker from "./worker/EncryptionWorker.ts?worker";
 
 export type FilePreview = {
 	blob: Blob;
-	name: string;
+	decryptedName: string;
+	encryptedName: string;
 	type: string | null;
 };
 
@@ -17,7 +18,7 @@ export function useWorkerEncryption(refresh: () => void) {
 	const worker = useMemo(() => new ApiEncryptionWorker(), []);
 	const { requestNewPassword } = usePasswordContext();
 
-	const encryptBlob = (file: File, password: string): Promise<void> => {
+	const encryptBlob = async (file: File, password: string): Promise<void> => {
 		return new Promise((resolve, reject) => {
 			const job = new EncryptionJob(worker, file);
 			job.addEventListener(
@@ -32,7 +33,7 @@ export function useWorkerEncryption(refresh: () => void) {
 				"oncomplete",
 				() => {
 					refresh();
-					toast(`File '${file.name}' has been uploaded.`);
+					toast(`File "${file.name}" has been uploaded.`);
 					resolve();
 				},
 				{ once: true },
@@ -41,14 +42,17 @@ export function useWorkerEncryption(refresh: () => void) {
 		});
 	};
 
-	const decryptBlob = (fileName: string, password: string): Promise<void> =>
-		new Promise((resolve, reject) => {
-			const job = new DecryptionJob(worker, fileName);
+	const decryptBlob = async (
+		encryptedFileName: string,
+		password: string,
+	): Promise<void> => {
+		return new Promise((resolve, reject) => {
+			const job = new DecryptionJob(worker, encryptedFileName);
 			job.addEventListener(
 				"onerror",
 				() => {
 					requestNewPassword((newPassword) =>
-						decryptBlob(fileName, newPassword),
+						decryptBlob(encryptedFileName, newPassword),
 					);
 					reject();
 				},
@@ -60,7 +64,8 @@ export function useWorkerEncryption(refresh: () => void) {
 					const preview: FilePreview = {
 						type: mime.getType(event.fileName),
 						blob: event.blob,
-						name: event.fileName,
+						encryptedName: encryptedFileName,
+						decryptedName: event.fileName,
 					};
 					setPreview(preview);
 					resolve();
@@ -69,6 +74,7 @@ export function useWorkerEncryption(refresh: () => void) {
 			);
 			job.startJob(password);
 		});
+	};
 
 	return { encryptBlob, decryptBlob, preview, setPreview };
 }

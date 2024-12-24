@@ -27,9 +27,9 @@ export function AppSidebar() {
 					<SidebarGroupContent>
 						<SidebarMenu>
 							{fileList.sort().map((item) => (
-								<SidebarMenuItem key={item}>
+								<SidebarMenuItem key={item.encryptedName}>
 									<SidebarMenuButton asChild>
-										<OpenFileButton fileName={item} />
+										<OpenFileButton item={item} />
 									</SidebarMenuButton>
 								</SidebarMenuItem>
 							))}

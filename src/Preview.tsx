@@ -1,6 +1,6 @@
 import type { FilePreview } from "./encryption/useWorkerEncryption.ts";
 import { useBlob } from "./hooks/useBlob.ts";
-import "@quozul/canvas-image/src/main.ts";
+import "@quozul/canvas-image";
 
 type Props = {
 	preview: FilePreview;
@@ -19,7 +19,7 @@ export function Preview({ preview }: Props) {
 			<canvas-image
 				className="block h-full"
 				src={previewUrl}
-				alt={preview.name}
+				alt={preview.decryptedName}
 				onContextMenu={() => false}
 			/>
 		);
@@ -39,9 +39,9 @@ export function Preview({ preview }: Props) {
 			<a
 				className="underline text-blue-500"
 				href={previewUrl}
-				download={preview.name}
+				download={preview.decryptedName}
 			>
-				Download {preview.name}
+				Download {preview.decryptedName}
 			</a>
 		</div>
 	);
