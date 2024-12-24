@@ -4,6 +4,6 @@ services:
     volumes:
       - "uploads:/app/uploads"
     ports:
-      - "3000:3000"
+      - "443:443"
 volumes:
   uploads: {}

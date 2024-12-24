@@ -4,8 +4,6 @@ import { useState } from "react";
 export function useDeleteCurrentPreview() {
 	const worker = useWorkerContext();
 	const [isLoading, setIsLoading] = useState(false);
-	const isVisible = worker.preview !== null;
-	const isDisabled = !isVisible || isLoading;
 
 	const handleDelete = async () => {
 		if (!worker.preview) {
@@ -29,7 +27,5 @@ export function useDeleteCurrentPreview() {
 	return {
 		handleDelete,
 		isLoading,
-		isDisabled,
-		isVisible,
 	};
 }

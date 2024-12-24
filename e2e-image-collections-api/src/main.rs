@@ -10,9 +10,12 @@ use axum::http::header::{CONTENT_RANGE, CONTENT_TYPE, RANGE};
 use axum::http::{HeaderValue, Method};
 use axum::routing::get;
 use axum::Router;
+use axum_server::tls_rustls::RustlsConfig;
 use handlers::get_files::get_files;
 use handlers::head_file::head_file;
 use handlers::post_file::post_file;
+use std::net::SocketAddr;
+use std::time::Duration;
 use tokio::signal;
 use tower_http::cors::CorsLayer;
 use tower_http::limit::RequestBodyLimitLayer;
@@ -67,16 +70,46 @@ async fn main() {
         .layer(RequestBodyLimitLayer::new(UPLOAD_SIZE_LIMIT))
         .layer(cors_layer);
 
-    // run it
+    if std::env::var("TLS").is_ok() {
+        listen_tls(app).await;
+    } else {
+        listen(app).await;
+    }
+}
+
+async fn listen(app: Router) {
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     info!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown_signal())
+        .with_graceful_shutdown(shutdown_signal(None))
         .await
         .unwrap();
 }
 
-async fn shutdown_signal() {
+async fn listen_tls(app: Router) {
+    let cwd = std::env::current_dir().unwrap();
+    let config = RustlsConfig::from_pem_file(
+        cwd.join("self_signed_certs").join("cert.pem"),
+        cwd.join("self_signed_certs").join("key.pem"),
+    )
+    .await
+    .unwrap();
+
+    let handle = axum_server::Handle::new();
+    let shutdown_future = shutdown_signal(Some(handle.clone()));
+
+    // run it
+    let addr = SocketAddr::from(([0, 0, 0, 0], 443));
+    tracing::debug!("listening on {}", addr);
+    axum_server::bind_rustls(addr, config)
+        .handle(handle)
+        .serve(app.into_make_service())
+        .await
+        .unwrap();
+    drop(shutdown_future);
+}
+
+async fn shutdown_signal(handle: Option<axum_server::Handle>) {
     let ctrl_c = async {
         signal::ctrl_c()
             .await
@@ -97,5 +130,10 @@ async fn shutdown_signal() {
     tokio::select! {
         _ = ctrl_c => {},
         _ = terminate => {},
+    }
+
+    if let Some(handle) = handle {
+        info!("Received termination signal shutting down");
+        handle.graceful_shutdown(Some(Duration::ZERO));
     }
 }

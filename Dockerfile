@@ -20,4 +20,14 @@ FROM alpine
 WORKDIR /app
 COPY --from=api-builder /usr/local/cargo/bin/api /usr/local/bin/api
 COPY --from=front-builder /usr/src/front/dist /app/static
+
+RUN apk add --no-cache openssl
+RUN mkdir -p /app/self_signed_certs
+RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+    -keyout /app/self_signed_certs/key.pem -out /app/self_signed_certs/cert.pem \
+    -subj "/C=US/ST=YourState/L=YourCity/O=YourOrg/CN=localhost"
+
+ENV CARGO_MANIFEST_DIR /app
+ENV TLS TRUE
+EXPOSE 443
 CMD ["api"]

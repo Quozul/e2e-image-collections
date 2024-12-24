@@ -17,7 +17,7 @@ import { ThemeToggle } from "@/components/theme-toggle.tsx";
 import { useWorkerContext } from "@/contexts/useWorkerContext.ts";
 
 export function AppSidebar() {
-	const worker = useWorkerContext();
+	const { fileList } = useWorkerContext();
 
 	return (
 		<Sidebar>
@@ -26,7 +26,7 @@ export function AppSidebar() {
 					<SidebarGroupLabel>Files</SidebarGroupLabel>
 					<SidebarGroupContent>
 						<SidebarMenu>
-							{worker.fileList.map((item) => (
+							{fileList.sort().map((item) => (
 								<SidebarMenuItem key={item}>
 									<SidebarMenuButton asChild>
 										<OpenFileButton fileName={item} />
