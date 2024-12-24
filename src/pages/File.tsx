@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/dropdown-menu.tsx";
 import { usePasswordContext } from "@/contexts/usePasswordContext.ts";
 import { useWorkerContext } from "@/contexts/useWorkerContext.ts";
-import { FileLock, Lock, Menu } from "lucide-react";
+import { download } from "@/utils/download.ts";
+import { Download, FileLock, Lock, Menu } from "lucide-react";
 import { useEffect } from "react";
 import { useParams } from "react-router";
 
@@ -43,6 +44,17 @@ export default function File() {
 								</Button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent>
+								<DropdownMenuItem
+									onClick={() => {
+										if (preview === null) {
+											throw new Error("File must be decrypted for download");
+										}
+										download(preview.blob, preview.decryptedName);
+									}}
+								>
+									<Download />
+									Download
+								</DropdownMenuItem>
 								<DropdownMenuItem
 									onClick={() => {
 										setPreview(null);

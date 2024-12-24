@@ -2,25 +2,17 @@ import {
 	PasswordContext,
 	type PasswordContextType,
 } from "@/contexts/PasswordContext.ts";
-import { type PropsWithChildren, useCallback, useState } from "react";
+import { type PropsWithChildren, useState } from "react";
 
 export function PasswordContextProvider({ children }: PropsWithChildren) {
 	const [password, setPassword] = useState("");
 	const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
-	const handleSetPassword = useCallback((newPassword: string) => {
-		setPassword(newPassword);
-	}, []);
-
-	const handlePasswordModalStateChange = (isOpen: boolean) => {
-		setIsPasswordModalOpen(isOpen);
-	};
-
 	const value: PasswordContextType = {
 		password,
-		setPassword: handleSetPassword,
+		setPassword,
 		isPasswordModalOpen,
-		setIsPasswordModalOpen: handlePasswordModalStateChange,
+		setIsPasswordModalOpen,
 	};
 
 	return (

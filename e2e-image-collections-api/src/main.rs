@@ -15,11 +15,12 @@ use handlers::get_files::get_files;
 use handlers::head_file::head_file;
 use handlers::post_file::post_file;
 use std::net::SocketAddr;
+use std::path::PathBuf;
 use std::time::Duration;
 use tokio::signal;
 use tower_http::cors::CorsLayer;
 use tower_http::limit::RequestBodyLimitLayer;
-use tower_http::services::ServeDir;
+use tower_http::services::{ServeDir, ServeFile};
 use tower_http::trace::TraceLayer;
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -62,9 +63,13 @@ async fn main() {
             .delete(delete_file),
     );
 
+    let index_file_path = PathBuf::from(STATIC_DIRECTORY).join("index.html");
+
     let app = Router::new()
         .nest("/api", api_router)
-        .fallback_service(ServeDir::new(STATIC_DIRECTORY))
+        .fallback_service(
+            ServeDir::new(STATIC_DIRECTORY).not_found_service(ServeFile::new(index_file_path)),
+        )
         .layer(DefaultBodyLimit::disable())
         .layer(TraceLayer::new_for_http())
         .layer(RequestBodyLimitLayer::new(UPLOAD_SIZE_LIMIT))
