@@ -1,12 +1,13 @@
 mod content_range;
 mod error_handler;
 mod handlers;
+mod path_security;
 mod range;
 
 use crate::handlers::delete_file::delete_file;
 use crate::handlers::get_file::get_file;
 use axum::extract::DefaultBodyLimit;
-use axum::http::header::{CONTENT_RANGE, CONTENT_TYPE, RANGE};
+use axum::http::header::{CONTENT_LENGTH, CONTENT_RANGE, CONTENT_TYPE, RANGE};
 use axum::http::{HeaderValue, Method};
 use axum::routing::get;
 use axum::Router;
@@ -52,7 +53,7 @@ async fn main() {
 
     let cors_layer = CorsLayer::new()
         .allow_methods([Method::GET, Method::POST, Method::HEAD, Method::DELETE])
-        .allow_headers([CONTENT_RANGE, RANGE, CONTENT_TYPE])
+        .allow_headers([CONTENT_RANGE, RANGE, CONTENT_TYPE, CONTENT_LENGTH])
         .allow_origin("http://localhost:5173".parse::<HeaderValue>().unwrap());
 
     let api_router = Router::new().route("/file", get(get_files)).route(

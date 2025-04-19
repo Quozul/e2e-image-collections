@@ -1,17 +1,44 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 
-// Make our own error that wraps `anyhow::Error`.
-pub struct AppError(anyhow::Error);
+pub enum AppError {
+    Anyhow(anyhow::Error),
+    Defined {
+        status_code: StatusCode,
+        error_message: String,
+    },
+}
+
+impl AppError {
+    pub fn bad_request() -> Self {
+        Self::Defined {
+            status_code: StatusCode::BAD_REQUEST,
+            error_message: "Bad Request".to_string(),
+        }
+    }
+
+    pub fn not_found() -> Self {
+        Self::Defined {
+            status_code: StatusCode::NOT_FOUND,
+            error_message: "Not Found".to_string(),
+        }
+    }
+}
 
 // Tell axum how to convert `AppError` into a response.
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Something went wrong: {}", self.0),
-        )
-            .into_response()
+        match self {
+            Self::Anyhow(err) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Something went wrong: {}", err),
+            ),
+            Self::Defined {
+                status_code,
+                error_message,
+            } => (status_code, error_message),
+        }
+        .into_response()
     }
 }
 
@@ -22,6 +49,6 @@ where
     E: Into<anyhow::Error>,
 {
     fn from(err: E) -> Self {
-        Self(err.into())
+        Self::Anyhow(err.into())
     }
 }
