@@ -28,7 +28,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 const UPLOADS_DIRECTORY: &str = "uploads";
 const STATIC_DIRECTORY: &str = "static";
-const UPLOAD_SIZE_LIMIT: usize = 16_777_216; /* 16 MiB */
+const UPLOAD_SIZE_LIMIT: usize = 16 * 1024 * 1024 + 16; /* 16 MiB + 16 B */
 
 #[tokio::main]
 async fn main() {
