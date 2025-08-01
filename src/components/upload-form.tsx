@@ -20,9 +20,7 @@ const formSchema = z.object({
 	password: z.string().min(2, {
 		message: "Password must be at least 2 characters.",
 	}),
-	file: z
-		.instanceof(FileList)
-		.refine((file) => file?.length === 1, "Exactly one file must be selected."),
+	file: z.instanceof(FileList),
 });
 
 type Props = {
@@ -49,7 +47,7 @@ export default function UploadForm({ setOpen }: Props) {
 		}
 
 		for (const file of values.file) {
-			await worker.encryptBlob(file, values.password);
+			worker.encryptBlob(file, values.password);
 		}
 
 		setOpen(false);
@@ -87,7 +85,7 @@ export default function UploadForm({ setOpen }: Props) {
 						<FormItem>
 							<FormLabel>File</FormLabel>
 							<FormControl>
-								<Input type="file" {...fileRef} />
+								<Input multiple type="file" {...fileRef} />
 							</FormControl>
 							<FormDescription>
 								Select the file you would like to upload.
