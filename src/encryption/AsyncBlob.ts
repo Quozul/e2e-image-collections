@@ -26,3 +26,22 @@ export class AsyncArrayBuffer implements Slice {
 		return this._arrayBuffer.byteLength;
 	}
 }
+
+export class AsyncSliceReader {
+	private _offset = 0;
+	constructor(private _slice: Slice) {}
+
+	async read(bytes: number): Promise<ArrayBuffer | null> {
+		if (this.isDone()) {
+			return null;
+		}
+		const end = Math.min(this._offset + bytes, this._slice.size);
+		const buffer = await this._slice.slice(this._offset, end);
+		this._offset = end;
+		return buffer.byteLength > 0 ? buffer : null;
+	}
+
+	isDone(): boolean {
+		return this._offset >= this._slice.size;
+	}
+}

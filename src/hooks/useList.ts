@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePasswordContext } from "@/contexts/usePasswordContext.ts";
-import { PasswordKey } from "@/encryption/PasswordKey.ts";
 import { StringEncryption } from "@/encryption/StringEncryption.ts";
 import { useFetch } from "./useFetch.ts";
 
@@ -15,14 +14,15 @@ export function useList() {
 		[],
 	);
 	const [data, setData] = useState<ListItem[]>([]);
-	const stringEncryption = useStringEncryption();
+	const { password } = usePasswordContext();
+	const stringEncryption = useMemo(() => new StringEncryption(), []);
 
 	useEffect(() => {
 		if (stringEncryption) {
 			Promise.all(
 				response.data.map((encryptedName) =>
 					stringEncryption
-						.decryptString(encryptedName)
+						.decryptString(encryptedName, password)
 						.then((decryptedName) => {
 							return { decryptedName, encryptedName };
 						})
@@ -37,21 +37,7 @@ export function useList() {
 				})),
 			);
 		}
-	}, [response.data, stringEncryption]);
+	}, [response.data, stringEncryption, password]);
 
 	return { data, refresh: response.refresh };
-}
-
-export function useStringEncryption() {
-	const { password } = usePasswordContext();
-	const [stringEncryption, setStringEncryption] =
-		useState<StringEncryption | null>(null);
-
-	useEffect(() => {
-		PasswordKey.load(password).then((key) =>
-			setStringEncryption(new StringEncryption(key)),
-		);
-	}, [password]);
-
-	return stringEncryption;
 }

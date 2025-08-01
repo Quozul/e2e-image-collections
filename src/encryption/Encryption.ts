@@ -1,77 +1,87 @@
-/*
- * Documentations
- *
- * https://sec4dev.io/assets/uploads/slides/Tom-End-to-end-File-Encryption-in-the-Web-Browser-A-Case-Study.pdf
- * https://crypto.stackexchange.com/questions/81539/proper-way-of-encrypting-large-files-with-aes-256-gcm
- * https://stackoverflow.com/questions/59514734/encrypting-large-files-using-the-webcrypto-api
- * https://github.com/mozilla/send/blob/ade10e496c064d3b29191dd33b1066bf99607d74/app/ece.js#L188
- */
-
-import type { Slice } from "./AsyncBlob.ts";
-import type { PasswordKey } from "./PasswordKey.ts";
+import { AsyncSliceReader, type Slice } from "./AsyncBlob.ts";
+import {
+	ENCRYPTION_ALGORITHM,
+	KEY_SALT_SIZE,
+	PasswordKey,
+} from "./PasswordKey.ts";
 
 // Constants
-export const IV_SIZE = 16;
-export const SLICE_SIZE = 16_777_216 /* 16 MiB */ - IV_SIZE;
-export const ALGORITHM = "AES-GCM";
+export const IV_SIZE = 12; // 12 bytes is recommended for AES-GCM
+export const CHUNK_SIZE = 16 * 1024 * 1024; // 16 MiB plaintext chunks
+export const AUTH_TAG_SIZE = 16; // AES-GCM uses a 16-byte authentication tag
 
 export class Encryption {
-	public constructor(private _passwordKey: PasswordKey) {}
+	/**
+	 * Encrypts a stream of data.
+	 * The output format is: [salt][iv_1][encrypted_chunk_1][iv_2][encrypted_chunk_2]...
+	 *
+	 * @param plaintext The data to encrypt (e.g., a File).
+	 * @param password The password to use for encryption.
+	 */
+	public async *encrypt(
+		plaintext: Slice,
+		password: string,
+	): AsyncGenerator<ArrayBuffer> {
+		const salt = crypto.getRandomValues(new Uint8Array(KEY_SALT_SIZE));
+		yield salt.buffer;
 
-	protected async *encrypt(input: Slice): AsyncGenerator<ArrayBuffer> {
-		// Generate a random IV
-		let iv = this.generateIv(IV_SIZE);
-		yield iv.buffer;
+		const passwordKey = await PasswordKey.load(password, salt);
 
-		// Encrypt the file slice by slice
-		for await (const chunk of this.chunked(input, 0, SLICE_SIZE)) {
+		for await (const chunk of this.chunked(plaintext, CHUNK_SIZE)) {
+			const iv = crypto.getRandomValues(new Uint8Array(IV_SIZE));
+
 			const encryptedChunk = await crypto.subtle.encrypt(
-				{ name: ALGORITHM, iv },
-				this._passwordKey.key,
+				{ name: ENCRYPTION_ALGORITHM, iv: iv },
+				passwordKey.key,
 				chunk,
 			);
+
+			yield iv.buffer;
 			yield encryptedChunk;
-
-			const nextIv = chunk.slice(chunk.byteLength - IV_SIZE, chunk.byteLength);
-			iv = new Uint8Array(nextIv);
 		}
 	}
 
-	protected async *decrypt(input: Slice): AsyncGenerator<ArrayBuffer> {
-		const rawIv = await input.slice(0, IV_SIZE);
-		let iv = new Uint8Array(rawIv);
+	/**
+	 * Decrypts a stream of data that was encrypted with the `encrypt` method.
+	 *
+	 * @param ciphertext The data to decrypt.
+	 * @param password The password to use for decryption.
+	 */
+	public async *decrypt(
+		ciphertext: Slice,
+		password: string,
+	): AsyncGenerator<ArrayBuffer> {
+		const reader = new AsyncSliceReader(ciphertext);
 
-		for await (const chunk of this.chunked(
-			input,
-			IV_SIZE,
-			SLICE_SIZE + IV_SIZE,
-		)) {
-			const decryptedChunk = await crypto.subtle.decrypt(
-				{ name: ALGORITHM, iv },
-				this._passwordKey.key,
-				chunk,
-			);
-			yield decryptedChunk;
-
-			const nextIv = decryptedChunk.slice(
-				decryptedChunk.byteLength - IV_SIZE,
-				decryptedChunk.byteLength,
-			);
-			iv = new Uint8Array(nextIv);
-		}
-	}
-
-	protected async digest(input: Slice): Promise<string> {
-		let hash = new ArrayBuffer(0);
-
-		for await (const chunk of this.chunked(input, 0, SLICE_SIZE)) {
-			hash = await crypto.subtle.digest(
-				"SHA-256",
-				this.mergeArrayBuffers(hash, chunk),
-			);
+		const salt = await reader.read(KEY_SALT_SIZE);
+		if (!salt) {
+			throw new Error("Invalid ciphertext: could not read salt.");
 		}
 
-		return this.arrayBufferToHex(hash);
+		const passwordKey = await PasswordKey.load(password, new Uint8Array(salt));
+
+		while (!reader.isDone()) {
+			const iv = await reader.read(IV_SIZE);
+			if (!iv) break; // Reached the end of the file
+
+			const chunkToDecrypt = await reader.read(CHUNK_SIZE + AUTH_TAG_SIZE);
+			if (!chunkToDecrypt) {
+				throw new Error("Invalid ciphertext: partial chunk found.");
+			}
+
+			try {
+				const decryptedChunk = await crypto.subtle.decrypt(
+					{ name: ENCRYPTION_ALGORITHM, iv: new Uint8Array(iv) },
+					passwordKey.key,
+					chunkToDecrypt,
+				);
+				yield decryptedChunk;
+			} catch (_err) {
+				throw new Error(
+					"Decryption failed. The data is corrupt or the password is wrong.",
+				);
+			}
+		}
 	}
 
 	protected mergeArrayBuffers(
@@ -84,26 +94,13 @@ export class Encryption {
 		return merged.buffer;
 	}
 
-	private generateIv(ivSize: number = IV_SIZE) {
-		const iv = new Uint8Array(ivSize);
-		crypto.getRandomValues(iv);
-		return iv;
-	}
-
 	private async *chunked(
 		blob: Slice,
-		padding: number,
 		chunkSize: number,
 	): AsyncGenerator<ArrayBuffer> {
-		for (let i = padding; i < blob.size; i += chunkSize) {
+		for (let i = 0; i < blob.size; i += chunkSize) {
 			const end = Math.min(i + chunkSize, blob.size);
 			yield await blob.slice(i, end);
 		}
-	}
-
-	private arrayBufferToHex(buffer: ArrayBuffer): string {
-		return Array.from(new Uint8Array(buffer))
-			.map((x) => x.toString(16).padStart(2, "0"))
-			.join("");
 	}
 }

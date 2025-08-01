@@ -3,7 +3,6 @@ import type {
 	ClientMessages,
 	WorkerMessages,
 } from "@/encryption/worker/messages.ts";
-import { PasswordKey } from "../PasswordKey.ts";
 import { ProgressEncryption } from "../ProgressEncryption.ts";
 
 globalThis.onmessage = async (e) => {
@@ -28,18 +27,15 @@ globalThis.onmessage = async (e) => {
 async function instantiateEncryption(
 	password: string,
 ): Promise<ProgressEncryption> {
-	const passwordKey = await PasswordKey.load(password);
-	return new ProgressEncryption(passwordKey);
+	return new ProgressEncryption(password);
 }
 
 async function encryptString(password: string, input: string): Promise<string> {
-	const passwordKey = await PasswordKey.load(password);
-	return new StringEncryption(passwordKey).encryptString(input);
+	return new StringEncryption().encryptString(input, password);
 }
 
 async function decryptString(password: string, input: string): Promise<string> {
-	const passwordKey = await PasswordKey.load(password);
-	return new StringEncryption(passwordKey).decryptString(input);
+	return new StringEncryption().decryptString(input, password);
 }
 
 async function handleEncryptionJob(

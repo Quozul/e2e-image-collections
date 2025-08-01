@@ -2,26 +2,32 @@ import { AsyncArrayBuffer } from "./AsyncBlob.ts";
 import { Encryption } from "./Encryption.ts";
 
 export class StringEncryption extends Encryption {
-	public async encryptString(input: string): Promise<string> {
+	public async encryptString(input: string, password: string): Promise<string> {
 		const encoder = new TextEncoder();
 		const encodedText = encoder.encode(input);
 		let bytes = new ArrayBuffer(0);
 
 		const asyncArrayBuffer = new AsyncArrayBuffer(encodedText);
-		for await (const encryptedArrayBuffer of this.encrypt(asyncArrayBuffer)) {
+		for await (const encryptedArrayBuffer of this.encrypt(
+			asyncArrayBuffer,
+			password,
+		)) {
 			bytes = this.mergeArrayBuffers(bytes, encryptedArrayBuffer);
 		}
 
 		return this.bytesToBase64Url(bytes);
 	}
 
-	public async decryptString(input: string): Promise<string> {
+	public async decryptString(input: string, password: string): Promise<string> {
 		const buffer = this.decodeBase64UrlToArrayBuffer(input);
 		const decoder = new TextDecoder();
 		let bytes = new ArrayBuffer(0);
 
 		const asyncBlob = new AsyncArrayBuffer(buffer);
-		for await (const decryptedArrayBuffer of this.decrypt(asyncBlob)) {
+		for await (const decryptedArrayBuffer of this.decrypt(
+			asyncBlob,
+			password,
+		)) {
 			bytes = this.mergeArrayBuffers(bytes, decryptedArrayBuffer);
 		}
 

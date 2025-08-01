@@ -1,8 +1,12 @@
 import { AsyncBlob } from "./AsyncBlob.ts";
-import { Encryption, SLICE_SIZE } from "./Encryption.ts";
+import { CHUNK_SIZE, Encryption } from "./Encryption.ts";
 import { NetworkBlob } from "./NetworkBlob.ts";
 
 export class ProgressEncryption extends Encryption {
+	public constructor(private readonly _password: string) {
+		super();
+	}
+
 	public async *encryptFile(
 		input: Blob,
 		fileName: string,
@@ -13,7 +17,10 @@ export class ProgressEncryption extends Encryption {
 		let writtenBytes = 0;
 		const totalChunks = this.chunkCount(asyncBlob.size);
 
-		for await (const encryptedArrayBuffer of this.encrypt(asyncBlob)) {
+		for await (const encryptedArrayBuffer of this.encrypt(
+			asyncBlob,
+			this._password,
+		)) {
 			const rangeStart = writtenBytes;
 			const rangeEnd = rangeStart + encryptedArrayBuffer.byteLength;
 			await fetch(`${import.meta.env.VITE_API_BASE_URL}/file/${fileName}`, {
@@ -41,7 +48,10 @@ export class ProgressEncryption extends Encryption {
 
 		const blobParts: BlobPart[] = [];
 
-		for await (const decryptedArrayBuffer of this.decrypt(networkBlob)) {
+		for await (const decryptedArrayBuffer of this.decrypt(
+			networkBlob,
+			this._password,
+		)) {
 			blobParts.push(decryptedArrayBuffer);
 			yield ++chunk / totalChunks;
 		}
@@ -50,6 +60,6 @@ export class ProgressEncryption extends Encryption {
 	}
 
 	private chunkCount(size: number): number {
-		return Math.ceil(size / SLICE_SIZE);
+		return Math.ceil(size / CHUNK_SIZE);
 	}
 }
