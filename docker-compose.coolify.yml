@@ -1,0 +1,8 @@
+services:
+  api:
+    build: .
+    volumes:
+      - "uploads:/app/uploads"
+
+volumes:
+  uploads: {}
