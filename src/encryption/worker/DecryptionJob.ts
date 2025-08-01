@@ -14,10 +14,16 @@ export class DecryptionJobErrorEvent extends Event {
 		super("onerror");
 	}
 }
+export class DecryptionJobProgressEvent extends Event {
+	constructor(readonly progress: number) {
+		super("onprogress");
+	}
+}
 
 type EventMap = {
 	oncomplete: DecryptionJobCompleteEvent;
 	onerror: DecryptionJobErrorEvent;
+	onprogress: DecryptionJobProgressEvent;
 };
 
 export class DecryptionJob extends Job<EventMap> {
@@ -52,6 +58,12 @@ export class DecryptionJob extends Job<EventMap> {
 			this.dispatchTypedEvent(
 				"onerror",
 				new DecryptionJobErrorEvent(message.error),
+			);
+			this._worker.removeEventListener("message", this.handleMessage);
+		} else if (message.type === "decryptProgress") {
+			this.dispatchTypedEvent(
+				"onprogress",
+				new DecryptionJobProgressEvent(message.progress),
 			);
 			this._worker.removeEventListener("message", this.handleMessage);
 		}

@@ -1,7 +1,8 @@
-import { usePasswordContext } from "@/contexts/usePasswordContext.ts";
 import mime from "mime";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { usePasswordContext } from "@/contexts/usePasswordContext.ts";
+import { PreviewStatus } from "@/contexts/WorkerContext.ts";
 import { DecryptionJob } from "./worker/DecryptionJob.ts";
 import { EncryptionJob } from "./worker/EncryptionJob.ts";
 import ApiEncryptionWorker from "./worker/EncryptionWorker.ts?worker";
@@ -15,6 +16,10 @@ export type FilePreview = {
 
 export function useWorkerEncryption(refresh: () => void) {
 	const [preview, setPreview] = useState<FilePreview | null>(null);
+	const [previewStatus, setPreviewStatus] = useState<PreviewStatus>(
+		PreviewStatus.None,
+	);
+	const [decryptProgress, setDecryptProgress] = useState<number>(0);
 	const worker = useMemo(() => new ApiEncryptionWorker(), []);
 	const { setIsPasswordModalOpen } = usePasswordContext();
 
@@ -46,10 +51,14 @@ export function useWorkerEncryption(refresh: () => void) {
 	const decryptBlob = useCallback(
 		(encryptedFileName: string, password: string): DecryptionJob => {
 			const job = new DecryptionJob(worker, encryptedFileName);
+			setPreviewStatus(PreviewStatus.Loading);
+			setPreview(null);
+			setDecryptProgress(0);
 			job.addEventListener(
 				"onerror",
 				() => {
 					setIsPasswordModalOpen(true);
+					setPreviewStatus(PreviewStatus.Encrypted);
 				},
 				{ once: true },
 			);
@@ -63,14 +72,25 @@ export function useWorkerEncryption(refresh: () => void) {
 						decryptedName: event.fileName,
 					};
 					setPreview(preview);
+					setPreviewStatus(PreviewStatus.Available);
 				},
 				{ once: true },
 			);
+			job.addEventListener("onprogress", (event) => {
+				setDecryptProgress(event.progress);
+			});
 			job.startJob(password);
 			return job;
 		},
 		[worker],
 	);
 
-	return { encryptBlob, decryptBlob, preview, setPreview };
+	return {
+		encryptBlob,
+		decryptBlob,
+		preview,
+		setPreview,
+		previewStatus,
+		decryptProgress,
+	};
 }
