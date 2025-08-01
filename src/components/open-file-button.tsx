@@ -1,3 +1,6 @@
+import { Lock } from "lucide-react";
+import { forwardRef, type HTMLProps } from "react";
+import { Link } from "react-router";
 import {
 	Tooltip,
 	TooltipContent,
@@ -5,9 +8,6 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { ListItem } from "@/hooks/useList.ts";
-import { Lock } from "lucide-react";
-import { type HTMLProps, forwardRef } from "react";
-import { Link } from "react-router";
 
 type Props = {
 	item: ListItem;

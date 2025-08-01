@@ -47,7 +47,7 @@ export function useWorkerEncryption(refresh: () => void) {
 		[worker, refresh],
 	);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+	// biome-ignore lint/correctness/useExhaustiveDependencies: explanation
 	const decryptBlob = useCallback(
 		(encryptedFileName: string, password: string): DecryptionJob => {
 			const job = new DecryptionJob(worker, encryptedFileName);

@@ -1,6 +1,6 @@
+import type { PropsWithChildren } from "react";
 import { Separator } from "@/components/ui/separator.tsx";
 import { SidebarTrigger } from "@/components/ui/sidebar.tsx";
-import type { PropsWithChildren } from "react";
 
 export function Header({ children }: PropsWithChildren) {
 	return (

@@ -1,3 +1,7 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { LoaderCircle } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
 	Form,
@@ -10,10 +14,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { usePasswordContext } from "@/contexts/usePasswordContext.ts";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { LoaderCircle } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 
 const formSchema = z.object({
 	password: z.string().min(2, {

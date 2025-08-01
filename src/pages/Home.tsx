@@ -1,4 +1,5 @@
-import { Header } from "@/Header.tsx";
+import { FileIcon, FileLock } from "lucide-react";
+import { Link } from "react-router";
 import {
 	Tooltip,
 	TooltipContent,
@@ -6,8 +7,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip.tsx";
 import { useWorkerContext } from "@/contexts/useWorkerContext.ts";
-import { FileIcon, FileLock } from "lucide-react";
-import { Link } from "react-router";
+import { Header } from "@/Header.tsx";
 
 export default function Home() {
 	const { fileList } = useWorkerContext();

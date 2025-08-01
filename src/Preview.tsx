@@ -27,7 +27,7 @@ export function Preview({ preview }: Props) {
 
 	if (preview.type?.startsWith("video/")) {
 		return (
-			// biome-ignore lint/a11y/useMediaCaption: <explanation>
+			// biome-ignore lint/a11y/useMediaCaption: explanation
 			<video src={previewUrl} controls className="w-full h-full">
 				<source src={previewUrl} type={preview.type} />
 			</video>

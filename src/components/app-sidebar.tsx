@@ -1,3 +1,5 @@
+import { Home } from "lucide-react";
+import { Link } from "react-router";
 import { OpenFileButton } from "@/components/open-file-button.tsx";
 import SetPasswordModal from "@/components/set-password-modal.tsx";
 import { ThemeToggle } from "@/components/theme-toggle.tsx";
@@ -14,8 +16,6 @@ import {
 } from "@/components/ui/sidebar";
 import UploadFileModal from "@/components/upload-file-modal.tsx";
 import { useWorkerContext } from "@/contexts/useWorkerContext.ts";
-import { Home } from "lucide-react";
-import { Link } from "react-router";
 
 export function AppSidebar() {
 	const { fileList } = useWorkerContext();

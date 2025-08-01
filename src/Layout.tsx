@@ -1,7 +1,7 @@
+import { Outlet } from "react-router";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner.tsx";
-import { Outlet } from "react-router";
 
 export default function Layout() {
 	return (

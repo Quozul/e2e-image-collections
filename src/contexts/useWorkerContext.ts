@@ -1,8 +1,8 @@
+import { useContext } from "react";
 import {
 	WorkerContext,
 	type WorkerContextType,
 } from "@/contexts/WorkerContext.ts";
-import { useContext } from "react";
 
 export function useWorkerContext(): WorkerContextType {
 	const context = useContext(WorkerContext);

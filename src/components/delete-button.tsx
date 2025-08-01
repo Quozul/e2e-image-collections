@@ -1,3 +1,4 @@
+import { LoaderCircle, Trash } from "lucide-react";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -9,10 +10,8 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu.tsx";
 import { useDeleteCurrentPreview } from "@/hooks/useDeleteCurrentPreview.ts";
-import { LoaderCircle, Trash } from "lucide-react";
 
 export function DeleteButton() {
 	const deleteCurrentPreview = useDeleteCurrentPreview();

@@ -1,3 +1,5 @@
+import { Upload } from "lucide-react";
+import { useState } from "react";
 import {
 	Dialog,
 	DialogContent,
@@ -9,8 +11,6 @@ import {
 } from "@/components/ui/dialog";
 import { SidebarMenuButton } from "@/components/ui/sidebar.tsx";
 import UploadForm from "@/components/upload-form.tsx";
-import { Upload } from "lucide-react";
-import { useState } from "react";
 
 export default function UploadFileModal() {
 	const [open, setOpen] = useState(false);

@@ -73,7 +73,7 @@ async function handleDecryptionJob(
 		const generator = encryption.decryptBlob(encryptedFileName);
 
 		let result: IteratorResult<number | Blob>;
-		// biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
+		// biome-ignore lint/suspicious/noAssignInExpressions: explanation
 		while (!(result = await generator.next()).done) {
 			if (typeof result.value === "number") {
 				sendMessage({ type: "decryptProgress", progress: result.value, jobId });

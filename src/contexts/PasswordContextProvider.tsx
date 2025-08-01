@@ -1,8 +1,8 @@
+import { type PropsWithChildren, useState } from "react";
 import {
 	PasswordContext,
 	type PasswordContextType,
 } from "@/contexts/PasswordContext.ts";
-import { type PropsWithChildren, useState } from "react";
 
 export function PasswordContextProvider({ children }: PropsWithChildren) {
 	const [password, setPassword] = useState("");

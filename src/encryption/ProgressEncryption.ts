@@ -37,15 +37,12 @@ export class ProgressEncryption extends Encryption {
 		);
 		const totalSize = networkBlob.size;
 		let chunk = 0;
-		let readBytes = 0;
 		const totalChunks = this.chunkCount(totalSize);
 
 		const blobParts: BlobPart[] = [];
 
 		for await (const decryptedArrayBuffer of this.decrypt(networkBlob)) {
 			blobParts.push(decryptedArrayBuffer);
-
-			readBytes += decryptedArrayBuffer.byteLength;
 			yield ++chunk / totalChunks;
 		}
 

@@ -1,13 +1,13 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
-import Router from "@/Router.tsx";
+import { BrowserRouter } from "react-router";
 import { ThemeProvider } from "@/components/theme-provider.tsx";
 import { PasswordContextProvider } from "@/contexts/PasswordContextProvider.tsx";
 import { WorkerContextProvider } from "@/contexts/WorkerContextProvider.tsx";
-import { BrowserRouter } from "react-router";
+import Router from "@/Router.tsx";
 
-// biome-ignore lint/style/noNonNullAssertion: <explanation>
+// biome-ignore lint/style/noNonNullAssertion: explanation
 ReactDOM.createRoot(document.getElementById("root")!).render(
 	<React.StrictMode>
 		<PasswordContextProvider>

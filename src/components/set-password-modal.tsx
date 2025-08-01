@@ -1,3 +1,4 @@
+import { Key } from "lucide-react";
 import PasswordForm from "@/components/password-form.tsx";
 import {
 	Dialog,
@@ -10,7 +11,6 @@ import {
 } from "@/components/ui/dialog";
 import { SidebarMenuButton } from "@/components/ui/sidebar.tsx";
 import { usePasswordContext } from "@/contexts/usePasswordContext.ts";
-import { Key } from "lucide-react";
 
 export default function SetPasswordModal() {
 	const { isPasswordModalOpen, setIsPasswordModalOpen } = usePasswordContext();
