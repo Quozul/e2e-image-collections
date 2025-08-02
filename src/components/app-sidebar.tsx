@@ -1,7 +1,6 @@
-import { Home } from "lucide-react";
+import { Home, Key } from "lucide-react";
 import { Link } from "react-router";
 import { OpenFileButton } from "@/components/open-file-button.tsx";
-import SetPasswordModal from "@/components/set-password-modal.tsx";
 import { ThemeToggle } from "@/components/theme-toggle.tsx";
 import {
 	Sidebar,
@@ -15,10 +14,12 @@ import {
 	SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import UploadFileModal from "@/components/upload-file-modal.tsx";
+import { usePasswordContext } from "@/contexts/usePasswordContext.ts";
 import { useWorkerContext } from "@/contexts/useWorkerContext.ts";
 
 export function AppSidebar() {
 	const { fileList } = useWorkerContext();
+	const { setIsPasswordModalOpen } = usePasswordContext();
 
 	return (
 		<Sidebar>
@@ -51,6 +52,11 @@ export function AppSidebar() {
 								</SidebarMenuItem>
 							))}
 						</SidebarMenu>
+						{fileList.length === 0 && (
+							<SidebarMenuItem>
+								<UploadFileModal />
+							</SidebarMenuItem>
+						)}
 					</SidebarGroupContent>
 				</SidebarGroup>
 			</SidebarContent>
@@ -58,7 +64,10 @@ export function AppSidebar() {
 			<SidebarFooter>
 				<SidebarMenu>
 					<SidebarMenuItem>
-						<SetPasswordModal />
+						<SidebarMenuButton onClick={() => setIsPasswordModalOpen(true)}>
+							<Key />
+							Change decryption password
+						</SidebarMenuButton>
 					</SidebarMenuItem>
 					<SidebarMenuItem>
 						<UploadFileModal />

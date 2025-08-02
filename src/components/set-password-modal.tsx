@@ -1,4 +1,3 @@
-import { Key } from "lucide-react";
 import PasswordForm from "@/components/password-form.tsx";
 import {
 	Dialog,
@@ -7,9 +6,7 @@ import {
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-	DialogTrigger,
 } from "@/components/ui/dialog";
-import { SidebarMenuButton } from "@/components/ui/sidebar.tsx";
 import { usePasswordContext } from "@/contexts/usePasswordContext.ts";
 
 export default function SetPasswordModal() {
@@ -17,12 +14,6 @@ export default function SetPasswordModal() {
 
 	return (
 		<Dialog open={isPasswordModalOpen} onOpenChange={setIsPasswordModalOpen}>
-			<SidebarMenuButton asChild>
-				<DialogTrigger>
-					<Key />
-					Change decryption password
-				</DialogTrigger>
-			</SidebarMenuButton>
 			<DialogContent>
 				<DialogHeader>
 					<DialogTitle>Change decryption password</DialogTitle>

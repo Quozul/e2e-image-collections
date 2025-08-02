@@ -1,4 +1,5 @@
 import { type PropsWithChildren, useState } from "react";
+import SetPasswordModal from "@/components/set-password-modal.tsx";
 import {
 	PasswordContext,
 	type PasswordContextType,
@@ -17,6 +18,7 @@ export function PasswordContextProvider({ children }: PropsWithChildren) {
 
 	return (
 		<PasswordContext.Provider value={value}>
+			<SetPasswordModal />
 			{children}
 		</PasswordContext.Provider>
 	);
